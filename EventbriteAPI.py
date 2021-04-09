@@ -1,7 +1,7 @@
 import requests
 import json
 import creds
-API_KEY = creds.API_KEY
+API_KEY = creds.EB_API_KEY
 BASE_URL = 'https://www.eventbriteapi.com/v3/'
 
 auth_header = {
@@ -16,7 +16,7 @@ exampleAttendeeID='2310392373'
 
 # Valid Paths: events/event_id/attendees, organizations/orgID/events,
 
-r = requests.get(BASE_URL + 'attendees/2310392373'.format(orderidtest=orderidtest), headers=auth_header, params={"expand":"promotional_code"})
+r = requests.get(BASE_URL + 'events/132583327301'.format(orgID=MISSION_CAPITAL_ORG_ID), headers=auth_header, params={"expand":"category","expand":"promotional_code"})
 
 data = r.json()
 
