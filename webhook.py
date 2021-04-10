@@ -53,10 +53,12 @@ def processOrder(api_url):
     attendees = r.json()
     for attendee in attendees['attendees']:
         print("Checking for a match for "+attendee['profile']['name'])
-        queryResult = sf.query("SELECT Id, Email, npsp__Primary_Affiliation__c, Primary_Affiliation_text__c FROM Contact WHERE Email = 'testupdate@email.com'".format(attendeeEmail=attendee['profile']['email']))
+        queryResult = sf.query("SELECT Id, Email, npsp__Primary_Affiliation__c, Primary_Affiliation_text__c FROM Contact WHERE Email = '{attendeeEmail}'".format(attendeeEmail=attendee['profile']['email']))
         if queryResult['totalSize'] == 0:
             print("Attendee not found in db by email search. Checking if organization name exists...")
             accountQueryResult = sf.query("SELECT Id, Name from Account WHERE Name = '{ebOrg}'".format(ebOrg=attendee['company']))
+            if accountQueryResult['totalSize'] ==0:
+                print("No matching company")
             if accountQueryResult['totalSize'] ==1:
                 print("Account Found, searching by name...")
                 personQueryResult = sf.query("SELECT Id, Name, Primary_Affiliation_text__c FROM Contact WHERE Name='{ebName}' AND Primary_Affiliation_text__c='{ebCompany}".format(ebName=attendee['name'], ebCompany=attendee['company']))
