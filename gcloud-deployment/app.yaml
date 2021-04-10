@@ -1,0 +1,2 @@
+platform: python38
+entrypoint: webhook.respond

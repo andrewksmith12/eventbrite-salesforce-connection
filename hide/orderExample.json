@@ -1,0 +1,45 @@
+{
+    "costs": {
+      "base_price": {
+        "display": "$181.64",
+        "currency": "USD",
+        "value": 18164,
+        "major_value": "181.64"
+      },
+      "eventbrite_fee": {
+        "display": "$13.36",
+        "currency": "USD",
+        "value": 1336,
+        "major_value": "13.36"
+      },
+      "gross": {
+        "display": "$200.00",
+        "currency": "USD",
+        "value": 20000,
+        "major_value": "200.00"
+      },
+      "payment_fee": {
+        "display": "$5.00",
+        "currency": "USD",
+        "value": 500,
+        "major_value": "5.00"
+      },
+      "tax": {
+        "display": "$0.00",
+        "currency": "USD",
+        "value": 0,
+        "major_value": "0.00"
+      }
+    },
+    "resource_uri": "https://www.eventbriteapi.com/v3/orders/914223927/",
+    "id": "914223927",
+    "changed": "2019-03-12T12:54:11Z",
+    "created": "2019-03-12T12:54:09Z",
+    "name": "Madge Whistler",
+    "first_name": "Madge",
+    "last_name": "Whistler",
+    "email": "finance@projecttransitions.org",
+    "status": "placed",
+    "time_remaining": null,
+    "event_id": "55662651489"
+  }
