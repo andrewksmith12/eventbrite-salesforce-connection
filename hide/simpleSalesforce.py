@@ -32,15 +32,45 @@ sf = Salesforce(instance=SANDBOX_URL, username=USERNAME, password=PASSWORD, secu
 # sfResult = sf.CampaignMember.create({'CampaignId':sfCampaign['records'][0]["Id"], 'ContactId':'0038A00000YfgVEQAZ'})
 # print(sfResult['id'])
 
-attendee = {}
-api_output = {'pagination': {'object_count': 1, 'page_number': 1, 'page_size': 50, 'page_count': 1, 'has_more_items': False}, 'attendees': [{'costs': {'base_price': {'display': '$209.90', 'currency': 'USD', 'value': 20990, 'major_value': '209.90'}, 'eventbrite_fee': {'display': '$9.47', 'currency': 'USD', 'value': 947, 'major_value': '9.47'}, 'gross': {'display': '$225.00', 'currency': 'USD', 'value': 22500, 'major_value': '225.00'}, 'payment_fee': {'display': '$5.63', 'currency': 'USD', 'value': 563, 'major_value': '5.63'}, 'tax': {'display': '$0.00', 'currency': 'USD', 'value': 0, 'major_value': '0.00'}}, 'resource_uri': 'https://www.eventbriteapi.com/v3/orders/1659644669/attendees/2314922795/', 'id': '2314922795', 'changed': '2021-03-23T15:37:27Z', 'created': '2021-03-23T15:37:27Z', 'quantity': 1, 'variant_id': None, 'profile': {'first_name': 'Raney', 'last_name': 'McKool', 'addresses': {'bill': {'postal_code': '78704'}}, 'company': 'Todos Juntos Learning Center', 'name': 'Raney McKool', 'email': 'raney@todosjuntoslc.org', 'job_title': 'Operations Director'}, 'barcodes': [{'status': 'unused', 'barcode': '16596446692314922795001', 'created': '2021-03-23T15:37:30Z', 'changed': '2021-03-23T15:37:30Z', 'checkin_type': 0, 'is_printed': False, 'qr_code_url': 'https://www.eventbriteapi.com/qrcode/16596446692314922795001/?sig=AHTu1yYrsKf-3LxNci4Qqhq70d4wb1XXjQ'}], 'answers': [{'answer': 'Email', 'question': 'How did you hear about this event?', 'type': 'text', 'question_id': '38655171'}, {'answer': 'No', 'question': 'Do you identify as black, indigenous, and/or a person of color? ', 'type': 'multiple_choice', 'question_id': '38655173'}, {'answer': 'Arab, Middle Eastern, or North African | White or Caucasian', 'question': 'What is your race? Check all that apply.', 'type': 'multiple_choice', 'question_id': '38655175'}], 'checked_in': False, 'cancelled': False, 'refunded': False, 'affiliate': 'oddtdteb', 'guestlist_id': None, 'invited_by': None, 'status': 'Attending', 'ticket_class_name': 'Member Ticket', 'delivery_method': 'electronic', 'event_id': '132582739543', 'order_id': '1659644669', 'ticket_class_id': '230905845'}]}
 
 accountID = '0018A00000dGK0rQAG'
+campaignID = '7018A000000U2bzQAC'
+contactID = '0038A00000ZVhpbQAD'
+buyerID = '0038A00000ZVhpbQAD'
+attendee = {'costs': {'base_price': {'display': '$0.00', 'currency': 'USD', 'value': 0, 'major_value': '0.00'}, 'eventbrite_fee': {'display': '$0.00', 'currency': 'USD', 'value': 0, 'major_value': '0.00'}, 'gross': {'display': '$0.00', 'currency': 'USD', 'value': 0, 'major_value': '0.00'}, 'payment_fee': {'display': '$0.00', 'currency': 'USD', 'value': 0, 'major_value': '0.00'}, 'tax': {'display': '$0.00', 'currency': 'USD', 'value': 0, 'major_value': '0.00'}}, 'resource_uri': 'https://www.eventbriteapi.com/v3/orders/1679046901/attendees/2344603415/', 'id': '2344603415', 'changed': '2021-04-08T16:40:22Z', 'created': '2021-04-08T16:40:22Z', 'quantity': 1, 'variant_id': None, 'profile': {'first_name': 'Julie', 'last_name': 'Candoli', 'addresses': {}, 'company': 'Foundation Communities', 'name': 'Julie Candoli', 'email': 'julie.candoli@foundcom.org', 'job_title': 'Director of Institutional Giving'}, 'barcodes': [{'status': 'unused', 'barcode': '16790469012344603415001', 'created': '2021-04-08T16:40:24Z', 'changed': '2021-04-08T16:40:24Z', 'checkin_type': 0, 'is_printed': False, 'qr_code_url': 'https://www.eventbriteapi.com/qrcode/16790469012344603415001/?sig=AHTu1yajawIe18aZ57GKVRtPDCaqQqDj5Q'}], 'answers': [{'answer': 'MSDF email', 'question': 'How did you hear about this event?', 'type': 'text', 'question_id': '40969885'}, {'answer': 'No', 'question': 'Do you identify as black, indigenous, and/or a person of color? ', 'type': 'multiple_choice', 'question_id': '40969887'}, {'answer': 'White or Caucasian', 'question': 'What is your race? Check all that apply.', 'type': 'multiple_choice', 'question_id': '40969889'}], 'checked_in': False, 'cancelled': False, 'refunded': False, 'affiliate': 'ebdsoporgprofile', 'guestlist_id': None, 'invited_by': None, 'status': 'Attending', 'ticket_class_name': 'Member Ticket', 'delivery_method': 'electronic', 'event_id': '144674887483', 'order_id': '1679046901', 'ticket_class_id': '251835763', 'promotional_code': {'resource_uri': 'https://www.eventbriteapi.com/v3/events/144674887483/discounts/398818038/', 'id': '398818038', 'promotion': '100.00% - MSDF100', 'promotion_type': 'discount', 'code': 'MSDF100', 'percent_off': '100.00'}}
+pocAnswer = ""
+raceAnswer = ""
+raceFreeResponse = ""
+otherQuestions = ""
+
+response = sf.CampaignMember.create(
+    {'CampaignId':campaignID,
+    'ContactId':contactID,
+    'EventbriteSync__EventbriteId__c':attendee['id'],
+    'Eventbrite_Attendee_ID__c':attendee['id'],
+    'Eventbrite_Fee__c':attendee['costs']['eventbrite_fee']['major_value'],
+    'Total_Paid__c':attendee['costs']['base_price']['major_value'],
+    'Ticket_Type__c':attendee['ticket_class_name'],
+    'Status':attendee['status'],
+    'Identifies_as_BIPOC__c':pocAnswer,
+    'Race__c':raceAnswer,
+    'Race_self_describe__c':raceFreeResponse,
+    'Comments__c':otherQuestions})
+print(response)
 
 
-if "promotional_code" in attendee.keys():
-    sf.Opportunity.create({'AccountId':accountID, 'npsp__Primary_Contact__c':contactID, 'EventbriteSync__Buyer__c':buyerID, 'amount':attendee['costs']['gross']['major_value'], 'stage':'posted', 'CloseDate':attendee['created'], 'CampaignId':campaignID, 'Order_Number__c':attendee['order_id'], 'Ticket_Type__c':attendee['ticket_class_name'], 'RecordTypeId':'012f4000000JdASAA0' 'Coupon_Code__c':attendee['promotional_code']['code']})
-else:
+
+
+# attendee = {'costs': {'base_price': {'display': '$0.00', 'currency': 'USD', 'value': 0, 'major_value': '0.00'}, 'eventbrite_fee': {'display': '$0.00', 'currency': 'USD', 'value': 0, 'major_value': '0.00'}, 'gross': {'display': '$0.00', 'currency': 'USD', 'value': 0, 'major_value': '0.00'}, 'payment_fee': {'display': '$0.00', 'currency': 'USD', 'value': 0, 'major_value': '0.00'}, 'tax': {'display': '$0.00', 'currency': 'USD', 'value': 0, 'major_value': '0.00'}}, 'resource_uri': 'https://www.eventbriteapi.com/v3/orders/1679046901/attendees/2344603415/', 'id': '2344603415', 'changed': '2021-04-08T16:40:22Z', 'created': '2021-04-08T16:40:22Z', 'quantity': 1, 'variant_id': None, 'profile': {'first_name': 'Julie', 'last_name': 'Candoli', 'addresses': {}, 'company': 'Foundation Communities', 'name': 'Julie Candoli', 'email': 'julie.candoli@foundcom.org', 'job_title': 'Director of Institutional Giving'}, 'barcodes': [{'status': 'unused', 'barcode': '16790469012344603415001', 'created': '2021-04-08T16:40:24Z', 'changed': '2021-04-08T16:40:24Z', 'checkin_type': 0, 'is_printed': False, 'qr_code_url': 'https://www.eventbriteapi.com/qrcode/16790469012344603415001/?sig=AHTu1yajawIe18aZ57GKVRtPDCaqQqDj5Q'}], 'answers': [{'answer': 'MSDF email', 'question': 'How did you hear about this event?', 'type': 'text', 'question_id': '40969885'}, {'answer': 'No', 'question': 'Do you identify as black, indigenous, and/or a person of color? ', 'type': 'multiple_choice', 'question_id': '40969887'}, {'answer': 'White or Caucasian', 'question': 'What is your race? Check all that apply.', 'type': 'multiple_choice', 'question_id': '40969889'}], 'checked_in': False, 'cancelled': False, 'refunded': False, 'affiliate': 'ebdsoporgprofile', 'guestlist_id': None, 'invited_by': None, 'status': 'Attending', 'ticket_class_name': 'Member Ticket', 'delivery_method': 'electronic', 'event_id': '144674887483', 'order_id': '1679046901', 'ticket_class_id': '251835763', 'promotional_code': {'resource_uri': 'https://www.eventbriteapi.com/v3/events/144674887483/discounts/398818038/', 'id': '398818038', 'promotion': '100.00% - MSDF100', 'promotion_type': 'discount', 'code': 'MSDF100', 'percent_off': '100.00'}}
+# accountID = '0018A00000dGK0rQAG'
+# campaignID = '7018A000000U166QAC'
+# contactID = '0038A00000ZVhpbQAD'
+# buyerID = '0038A00000ZVhpbQAD'
+
+# if "promotional_code" in attendee.keys():
+#     sf.Opportunity.create({'AccountId':accountID, 'npsp__Primary_Contact__c':contactID, 'EventbriteSync__Buyer__c':buyerID, 'amount':attendee['costs']['gross']['major_value'], 'StageName':'posted', 'CloseDate':attendee['created'], 'CampaignId':campaignID, 'Order_Number__c':attendee['order_id'], 'Ticket_Type__c':attendee['ticket_class_name'], 'RecordTypeId':'012f4000000JdASAA0', 'Coupon_Code__c':attendee['promotional_code']['code'], 'Name':'testName'})
+# else:
+#     sf.Opportunity.create({'AccountId':accountID, 'npsp__Primary_Contact__c':contactID, 'EventbriteSync__Buyer__c':buyerID, 'amount':attendee['costs']['gross']['major_value'], 'StageName':'posted', 'CloseDate':attendee['created'], 'CampaignId':campaignID, 'Order_Number__c':attendee['order_id'], 'Ticket_Type__c':attendee['ticket_class_name'], 'RecordTypeId':'012f4000000JdASAA0', 'Name':'testName'})
 
 
 
