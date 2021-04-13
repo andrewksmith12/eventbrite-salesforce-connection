@@ -33,30 +33,30 @@ sf = Salesforce(instance=SANDBOX_URL, username=USERNAME, password=PASSWORD, secu
 # print(sfResult['id'])
 
 
-accountID = '0018A00000dGK0rQAG'
-campaignID = '7018A000000U2bzQAC'
-contactID = '0038A00000ZVhpbQAD'
-buyerID = '0038A00000ZVhpbQAD'
-attendee = {'costs': {'base_price': {'display': '$0.00', 'currency': 'USD', 'value': 0, 'major_value': '0.00'}, 'eventbrite_fee': {'display': '$0.00', 'currency': 'USD', 'value': 0, 'major_value': '0.00'}, 'gross': {'display': '$0.00', 'currency': 'USD', 'value': 0, 'major_value': '0.00'}, 'payment_fee': {'display': '$0.00', 'currency': 'USD', 'value': 0, 'major_value': '0.00'}, 'tax': {'display': '$0.00', 'currency': 'USD', 'value': 0, 'major_value': '0.00'}}, 'resource_uri': 'https://www.eventbriteapi.com/v3/orders/1679046901/attendees/2344603415/', 'id': '2344603415', 'changed': '2021-04-08T16:40:22Z', 'created': '2021-04-08T16:40:22Z', 'quantity': 1, 'variant_id': None, 'profile': {'first_name': 'Julie', 'last_name': 'Candoli', 'addresses': {}, 'company': 'Foundation Communities', 'name': 'Julie Candoli', 'email': 'julie.candoli@foundcom.org', 'job_title': 'Director of Institutional Giving'}, 'barcodes': [{'status': 'unused', 'barcode': '16790469012344603415001', 'created': '2021-04-08T16:40:24Z', 'changed': '2021-04-08T16:40:24Z', 'checkin_type': 0, 'is_printed': False, 'qr_code_url': 'https://www.eventbriteapi.com/qrcode/16790469012344603415001/?sig=AHTu1yajawIe18aZ57GKVRtPDCaqQqDj5Q'}], 'answers': [{'answer': 'MSDF email', 'question': 'How did you hear about this event?', 'type': 'text', 'question_id': '40969885'}, {'answer': 'No', 'question': 'Do you identify as black, indigenous, and/or a person of color? ', 'type': 'multiple_choice', 'question_id': '40969887'}, {'answer': 'White or Caucasian', 'question': 'What is your race? Check all that apply.', 'type': 'multiple_choice', 'question_id': '40969889'}], 'checked_in': False, 'cancelled': False, 'refunded': False, 'affiliate': 'ebdsoporgprofile', 'guestlist_id': None, 'invited_by': None, 'status': 'Attending', 'ticket_class_name': 'Member Ticket', 'delivery_method': 'electronic', 'event_id': '144674887483', 'order_id': '1679046901', 'ticket_class_id': '251835763', 'promotional_code': {'resource_uri': 'https://www.eventbriteapi.com/v3/events/144674887483/discounts/398818038/', 'id': '398818038', 'promotion': '100.00% - MSDF100', 'promotion_type': 'discount', 'code': 'MSDF100', 'percent_off': '100.00'}}
-pocAnswer = ""
-raceAnswer = ""
-raceFreeResponse = ""
-otherQuestions = ""
+# accountID = '0018A00000dGK0rQAG'
+# campaignID = '7018A000000U2bzQAC'
+# contactID = '0038A00000ZVhpbQAD'
+# buyerID = '0038A00000ZVhpbQAD'
+# attendee = {'costs': {'base_price': {'display': '$0.00', 'currency': 'USD', 'value': 0, 'major_value': '0.00'}, 'eventbrite_fee': {'display': '$0.00', 'currency': 'USD', 'value': 0, 'major_value': '0.00'}, 'gross': {'display': '$0.00', 'currency': 'USD', 'value': 0, 'major_value': '0.00'}, 'payment_fee': {'display': '$0.00', 'currency': 'USD', 'value': 0, 'major_value': '0.00'}, 'tax': {'display': '$0.00', 'currency': 'USD', 'value': 0, 'major_value': '0.00'}}, 'resource_uri': 'https://www.eventbriteapi.com/v3/orders/1679046901/attendees/2344603415/', 'id': '2344603415', 'changed': '2021-04-08T16:40:22Z', 'created': '2021-04-08T16:40:22Z', 'quantity': 1, 'variant_id': None, 'profile': {'first_name': 'Julie', 'last_name': 'Candoli', 'addresses': {}, 'company': 'Foundation Communities', 'name': 'Julie Candoli', 'email': 'julie.candoli@foundcom.org', 'job_title': 'Director of Institutional Giving'}, 'barcodes': [{'status': 'unused', 'barcode': '16790469012344603415001', 'created': '2021-04-08T16:40:24Z', 'changed': '2021-04-08T16:40:24Z', 'checkin_type': 0, 'is_printed': False, 'qr_code_url': 'https://www.eventbriteapi.com/qrcode/16790469012344603415001/?sig=AHTu1yajawIe18aZ57GKVRtPDCaqQqDj5Q'}], 'answers': [{'answer': 'MSDF email', 'question': 'How did you hear about this event?', 'type': 'text', 'question_id': '40969885'}, {'answer': 'No', 'question': 'Do you identify as black, indigenous, and/or a person of color? ', 'type': 'multiple_choice', 'question_id': '40969887'}, {'answer': 'White or Caucasian', 'question': 'What is your race? Check all that apply.', 'type': 'multiple_choice', 'question_id': '40969889'}], 'checked_in': False, 'cancelled': False, 'refunded': False, 'affiliate': 'ebdsoporgprofile', 'guestlist_id': None, 'invited_by': None, 'status': 'Attending', 'ticket_class_name': 'Member Ticket', 'delivery_method': 'electronic', 'event_id': '144674887483', 'order_id': '1679046901', 'ticket_class_id': '251835763', 'promotional_code': {'resource_uri': 'https://www.eventbriteapi.com/v3/events/144674887483/discounts/398818038/', 'id': '398818038', 'promotion': '100.00% - MSDF100', 'promotion_type': 'discount', 'code': 'MSDF100', 'percent_off': '100.00'}}
+# pocAnswer = ""
+# raceAnswer = ""
+# raceFreeResponse = ""
+# otherQuestions = ""
 
-response = sf.CampaignMember.create(
-    {'CampaignId':campaignID,
-    'ContactId':contactID,
-    'EventbriteSync__EventbriteId__c':attendee['id'],
-    'Eventbrite_Attendee_ID__c':attendee['id'],
-    'Eventbrite_Fee__c':attendee['costs']['eventbrite_fee']['major_value'],
-    'Total_Paid__c':attendee['costs']['base_price']['major_value'],
-    'Ticket_Type__c':attendee['ticket_class_name'],
-    'Status':attendee['status'],
-    'Identifies_as_BIPOC__c':pocAnswer,
-    'Race__c':raceAnswer,
-    'Race_self_describe__c':raceFreeResponse,
-    'Comments__c':otherQuestions})
-print(response)
+# response = sf.CampaignMember.create(
+#     {'CampaignId':campaignID,
+#     'ContactId':contactID,
+#     'EventbriteSync__EventbriteId__c':attendee['id'],
+#     'Eventbrite_Attendee_ID__c':attendee['id'],
+#     'Eventbrite_Fee__c':attendee['costs']['eventbrite_fee']['major_value'],
+#     'Total_Paid__c':attendee['costs']['base_price']['major_value'],
+#     'Ticket_Type__c':attendee['ticket_class_name'],
+#     'Status':attendee['status'],
+#     'Identifies_as_BIPOC__c':pocAnswer,
+#     'Race__c':raceAnswer,
+#     'Race_self_describe__c':raceFreeResponse,
+#     'Comments__c':otherQuestions})
+# print(response)
 
 
 
