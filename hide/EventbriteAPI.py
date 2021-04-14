@@ -18,7 +18,7 @@ exampleAttendeeID='2310392373'
 
 # Valid Paths: events/event_id/attendees, organizations/orgID/events,
 
-r = requests.get(BASE_URL + 'orders/1685368237/attendees'.format(orgID=MISSION_CAPITAL_ORG_ID), headers=auth_header, params={"expand":["category","promotional_code"]})
+r = requests.get(BASE_URL + 'orders/1685615639/attendees'.format(orgID=MISSION_CAPITAL_ORG_ID), headers=auth_header, params={"expand":["category","promotional_code"]})
 print(r.json)
 r = r.json()
 # print(json.dumps(r, indent=2))
