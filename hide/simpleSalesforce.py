@@ -34,7 +34,7 @@ sf = Salesforce(instance=SANDBOX_URL, username=USERNAME, password=PASSWORD, secu
 
 
 # accountID = '0018A00000dGK0rQAG'
-# campaignID = '7018A000000U2bzQAC'
+# campaignID = '7018A000000U2c9QAC'
 # contactID = '0038A00000ZVhpbQAD'
 # buyerID = '0038A00000ZVhpbQAD'
 # attendee = {'costs': {'base_price': {'display': '$0.00', 'currency': 'USD', 'value': 0, 'major_value': '0.00'}, 'eventbrite_fee': {'display': '$0.00', 'currency': 'USD', 'value': 0, 'major_value': '0.00'}, 'gross': {'display': '$0.00', 'currency': 'USD', 'value': 0, 'major_value': '0.00'}, 'payment_fee': {'display': '$0.00', 'currency': 'USD', 'value': 0, 'major_value': '0.00'}, 'tax': {'display': '$0.00', 'currency': 'USD', 'value': 0, 'major_value': '0.00'}}, 'resource_uri': 'https://www.eventbriteapi.com/v3/orders/1679046901/attendees/2344603415/', 'id': '2344603415', 'changed': '2021-04-08T16:40:22Z', 'created': '2021-04-08T16:40:22Z', 'quantity': 1, 'variant_id': None, 'profile': {'first_name': 'Julie', 'last_name': 'Candoli', 'addresses': {}, 'company': 'Foundation Communities', 'name': 'Julie Candoli', 'email': 'julie.candoli@foundcom.org', 'job_title': 'Director of Institutional Giving'}, 'barcodes': [{'status': 'unused', 'barcode': '16790469012344603415001', 'created': '2021-04-08T16:40:24Z', 'changed': '2021-04-08T16:40:24Z', 'checkin_type': 0, 'is_printed': False, 'qr_code_url': 'https://www.eventbriteapi.com/qrcode/16790469012344603415001/?sig=AHTu1yajawIe18aZ57GKVRtPDCaqQqDj5Q'}], 'answers': [{'answer': 'MSDF email', 'question': 'How did you hear about this event?', 'type': 'text', 'question_id': '40969885'}, {'answer': 'No', 'question': 'Do you identify as black, indigenous, and/or a person of color? ', 'type': 'multiple_choice', 'question_id': '40969887'}, {'answer': 'White or Caucasian', 'question': 'What is your race? Check all that apply.', 'type': 'multiple_choice', 'question_id': '40969889'}], 'checked_in': False, 'cancelled': False, 'refunded': False, 'affiliate': 'ebdsoporgprofile', 'guestlist_id': None, 'invited_by': None, 'status': 'Attending', 'ticket_class_name': 'Member Ticket', 'delivery_method': 'electronic', 'event_id': '144674887483', 'order_id': '1679046901', 'ticket_class_id': '251835763', 'promotional_code': {'resource_uri': 'https://www.eventbriteapi.com/v3/events/144674887483/discounts/398818038/', 'id': '398818038', 'promotion': '100.00% - MSDF100', 'promotion_type': 'discount', 'code': 'MSDF100', 'percent_off': '100.00'}}
@@ -100,3 +100,20 @@ sf = Salesforce(instance=SANDBOX_URL, username=USERNAME, password=PASSWORD, secu
 # sfresult = sf.Contact.update('0038A00000YfgVEQAZ',{'LastName': 'Jones', 'FirstName': 'John'})
 # sfresult = 204 (succeded, no content) 
 # sf.Contact.delete('0038A00000YfgVEQAZ')
+
+
+# result = sf.Contact.create(
+#     {'Email':attendee['profile']['email']+"3", 
+#     'FirstName':attendee['profile']['first_name']+"3", 
+#     'LastName':attendee['profile']['last_name']+"3", 
+#     'Title':attendee['profile']['job_title']+"3"})
+# contactID = result['id']
+# result = sf.Opportunity.create({'AccountId':"", 'npsp__Primary_Contact__c':contactID, 'EventbriteSync__Buyer__c':contactID, 'amount':attendee['costs']['gross']['major_value'], 'StageName':'posted', 'CloseDate':attendee['created'], 'CampaignId':campaignID, 'Order_Number__c':attendee['order_id'], 'Ticket_Type__c':attendee['ticket_class_name'], 'RecordTypeId':'012f4000000JdASAA0', 'Name':'tempName'})
+# print(result)
+
+# sf.Payment.create({})
+result = sf.Opportunity.create({'AccountId':'001f400000konYXAAY', 'npsp__Primary_Contact__c':'0035G00001gFPaEQAW', 'EventbriteSync__Buyer__c':'0035G00001gFPaEQAW', 'StageName':'posted', 'CloseDate':"2021-03-25T19:23:04Z", 'CampaignId':'7015G0000003a4iQAA', 'Order_Number__c':'1686870425', 'Ticket_Type__c':"Nonmember Ticket", 'RecordTypeId':'012f4000000JdASAA0', 'Name':'tempName', 'amount':'20.00'})
+print(result)
+opID = result['id']
+#result = sf.npe01__OppPayment__c.create({'npe01__Opportunity__c':opID, 'npe01__Paid__c':True, 'Payment_Contact__c':'0038A00000ZVhpbQAD', 'Ready_for_Invoice__c':True, 'npe01__Payment_Amount__c':'50.00'})
+#print(result)

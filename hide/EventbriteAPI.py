@@ -18,12 +18,17 @@ exampleAttendeeID='2310392373'
 
 # Valid Paths: events/event_id/attendees, organizations/orgID/events,
 
-r = requests.get(BASE_URL + 'orders/1685615639/attendees'.format(orgID=MISSION_CAPITAL_ORG_ID), headers=auth_header, params={"expand":["category","promotional_code"]})
-print(r.json)
+r = requests.get(BASE_URL + 'organizations/{orgID}/events'.format(orgID=MISSION_CAPITAL_ORG_ID), headers=auth_header, params={"expand":["category","promotional_code"], 'start_date.range_start':'2021-04-14', 'start_date.range_end':'2023-04-18'})
 r = r.json()
+eventIDs = []
+for item in r['events']:
+    print("\""+item['id']+"\", ", end="")
+
+# subprocess.run("pbcopy", universal_newlines=True, input=str(r))
 # print(json.dumps(r, indent=2))
-for attendee in r['attendees']:
-    subprocess.run("pbcopy", universal_newlines=True, input=str(attendee))
+# print(json.dumps(r, indent=2))
+# for attendee in r['attendees']:
+#     subprocess.run("pbcopy", universal_newlines=True, input=str(attendee))
 # print(r['attendees'][0]['profile']['company'])
 # aks = json.dumps(r, indent=2)
 # print(aks)
