@@ -256,8 +256,13 @@ def processCheckin(api_url):
     sf = getSalesforce()
     # Find CM record in SF, mark as checked in. 
     registration = requests.get(api_url, headers=AUTH_HEADER_EB, params={"expand":"category","expand":"promotional_code","expand":"promo_code"})
-    registration = registration.json()
-
+    campaignMemberQuery = sf.query(format_soql("SELECT Id, Primary_Affiliation_text__c FROM Contact WHERE Email = '{buyerEmail}'".format(buyerEmail=order['email'].strip().replace('"', '\\"').replace("'", "\\'").replace("'", "\\'"))))
+    if campaignMemberQuery['totalSize'] == 1:
+        print("Campaign Member found, updating status to Checked In")
+        campaignMemberID = campaignMemberQuery['records'][0]['Id']
+        result = sf.CampaignMember.update(campaignMemberID, {'status':'Attending'})
+    else:
+        print("Campaign member not found, skipping...")
 ## Main function that is invoked when the webhook is invoked. 
 ## Eventbrite API sends a POST request to the webhook. POST data is stored in request, convert it to JSON. The keys of the dict are 'api_url' which contains the URL with the data. 
 ## and config, which is a dictionary that contains the action (i.e order.created), user_id, endpoint_url (webhook address), and 'webhook_id'
