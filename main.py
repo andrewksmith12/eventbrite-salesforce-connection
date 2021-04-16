@@ -257,7 +257,7 @@ def processCheckin(api_url):
     # Find CM record in SF, mark as checked in. 
     registration = requests.get(api_url, headers=AUTH_HEADER_EB, params={"expand":"category","expand":"promotional_code","expand":"promo_code"})
     campaignMemberQuery = sf.query(format_soql("SELECT Id, Primary_Affiliation_text__c FROM Contact WHERE Email = '{buyerEmail}'".format(buyerEmail=order['email'].strip().replace('"', '\\"').replace("'", "\\'").replace("'", "\\'"))))
-    if campaignMemberQuery['totalSize'] == 1:
+    if campaignMemberQuery['totalSize'] >= 1:
         print("Campaign Member found, updating status to Checked In")
         campaignMemberID = campaignMemberQuery['records'][0]['Id']
         result = sf.CampaignMember.update(campaignMemberID, {'status':'Attending'})
