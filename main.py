@@ -91,7 +91,7 @@ def createCampaignMember(sf, attendee, campaignID, contactID):
             'Comments__c':otherQuestions})
         print("Created campaign member for "+attendee['profile']['first_name']+" successfully.")
     except Exception as e:
-        print("Error on create campaign member for"+attendee['profile']['first_name'])
+        print("Error on create campaign member for "+attendee['profile']['first_name'])
         print(e)
         print("Member may already exist, continuing process...")
         pass
@@ -99,7 +99,7 @@ def createCampaignMember(sf, attendee, campaignID, contactID):
 def createOpportunity(sf, attendee, contactID, accountID, campaignID, api_url):
     r = requests.get(api_url, headers=AUTH_HEADER_EB, params={"expand":["category","promotional_code"]})
     order = r.json()
-    buyerQuery = sf.query(format_soql("SELECT Id, Email, npsp__Primary_Affiliation__c, Primary_Affiliation_text__c FROM Contact WHERE Email = '{buyerEmail}'".format(buyerEmail=order['email'].strip())))
+    buyerQuery = sf.query(format_soql("SELECT Id, Email, npsp__Primary_Affiliation__c, Primary_Affiliation_text__c FROM Contact WHERE Email = '{buyerEmail}'".format(buyerEmail=order['email'].strip().replace('"', '\\"').replace("'", "\\'").replace("'", "\\'"))))
     if buyerQuery['totalSize'] == 1:
         buyerID = buyerQuery['records'][0]['Id']
         sf.Contact.update(buyerID, {
@@ -157,7 +157,7 @@ def processOrder(api_url):
         campaignID = sfCampaign['records'][0]['Id']
         print("Checking for an email match for "+attendee['profile']['name'])
         #Search SF for contact with attendee email
-        queryResult = sf.query("SELECT Id, Email, npsp__Primary_Affiliation__c, Primary_Affiliation_text__c FROM Contact WHERE Email = '{attendeeEmail}'".format(attendeeEmail=attendee['profile']['email'].strip())) 
+        queryResult = sf.query("SELECT Id, Email, npsp__Primary_Affiliation__c, Primary_Affiliation_text__c FROM Contact WHERE Email = '{attendeeEmail}'".format(attendeeEmail=attendee['profile']['email'].strip().replace('"', '\\"').replace("'", "\\'").replace("'", "\\'").replace("'", "\'"))) 
         # Check for edge case: Facebook Registration / Company Not Collected. 
         if 'company' not in attendee['profile'].keys():
             print("Company Name missing from record! Processing alternatively...")
@@ -182,7 +182,7 @@ def processOrder(api_url):
                 createOpportunity(sf, attendee, newContactID, "", campaignID, api_url)
         
         # If contact with an email IS found. 
-        if queryResult['totalSize'] >= 1:
+        elif queryResult['totalSize'] >= 1:
             print("Email match(es) found!")
             contactID = queryResult['records'][0]['Id']
             print("Checking if primary affiliation is an exact match....")
@@ -199,7 +199,7 @@ def processOrder(api_url):
             #If primary affiliation doesn't match
             else:
                 print("Primary Affiliation does not match")
-                accountQuery = sf.query(format_soql("SELECT Id, Name from Account WHERE Name LIKE '{ebOrg}'".format(ebOrg=attendee['profile']['company'].strip())))
+                accountQuery = sf.query(format_soql("SELECT Id, Name from Account WHERE Name LIKE '{ebOrg}'".format(ebOrg=attendee['profile']['company'].strip().replace('"', '\\"').replace("'", "\\'").replace("'", "\\'"))))
                 # If primary affiliaiton doesn't match, but it exists in salesforce update the contact and create the campaign member
                 if accountQuery['totalSize'] >= 1:
                     print("Matching account found. Starting update contact, create campaign member, create opportunity.")
@@ -220,7 +220,7 @@ def processOrder(api_url):
         # If contact with email is not found
         elif queryResult['totalSize'] == 0: 
             print("Email match failed. Checking if Account exists in Salesforce...")
-            accountQueryResult = sf.query(format_soql("SELECT Id, Name from Account WHERE Name LIKE '{ebOrg}'".format(ebOrg=attendee['profile']['company'].strip())))
+            accountQueryResult = sf.query(format_soql(("SELECT Id, Name from Account WHERE Name LIKE 'St. David\\'s Foundation'".format(ebOrg=attendee['profile']['company'].strip().replace('"', '\\"').replace("'", "\\'").replace("'", "\\'")))))
             #If the account doesn't exist in Salesforce, make the account, contact, campaign record
             if accountQueryResult['totalSize'] == 0:
                 print("No matching Account. Starting create Account, Contact, and Campaign Member")
@@ -234,7 +234,7 @@ def processOrder(api_url):
             else:
                 print("Matching Account Found, searching by name...")
                 accountID = accountQueryResult['records'][0]['Id']
-                personQueryResult = sf.query(format_soql("SELECT Id, Name, Primary_Affiliation_text__c FROM Contact WHERE Name='{ebName}' AND Primary_Affiliation_text__c LIKE '{ebCompany}'".format(ebName=attendee['profile']['name'].strip(), ebCompany=attendee['profile']['company'].strip())))
+                personQueryResult = sf.query(format_soql("SELECT Id, Name, Primary_Affiliation_text__c FROM Contact WHERE Name='{ebName}' AND Primary_Affiliation_text__c LIKE '{ebCompany}'".format(ebName=attendee['profile']['name'].strip().replace('"', '\\"').replace("'", "\\'").replace("'", "\\'"), ebCompany=attendee['profile']['company'].strip().replace('"', '\\"').replace("'", "\\'").replace("'", "\\'"))))
                 # If there's an exact name match, update the contact, create the campaign member. 
                 if personQueryResult['totalSize'] == 1:
                     print("Match found by Name and Company. Starting update contact, create campaign member, create opportunity.")
@@ -254,14 +254,9 @@ def processOrder(api_url):
 
 def processCheckin(api_url):
     sf = getSalesforce()
+    # Find CM record in SF, mark as checked in. 
     registration = requests.get(api_url, headers=AUTH_HEADER_EB, params={"expand":"category","expand":"promotional_code","expand":"promo_code"})
     registration = registration.json()
-    
-
-
-
-
-
 
 ## Main function that is invoked when the webhook is invoked. 
 ## Eventbrite API sends a POST request to the webhook. POST data is stored in request, convert it to JSON. The keys of the dict are 'api_url' which contains the URL with the data. 
@@ -305,4 +300,4 @@ def respondGet():
 if __name__ == '__main__':
    app.run()
 
-# processOrder(BASE_URL+"orders/1656541919")
+# processOrder(BASE_URL+"orders/1656541919")    

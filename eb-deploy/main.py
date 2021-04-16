@@ -1,9 +1,9 @@
+import simple_salesforce
 import creds
 import requests
 from flask import Flask, request, Response
 import json
-from simple_salesforce import Salesforce
-import logging
+from simple_salesforce import Salesforce, format_soql
 
 # Eventbrite API Authentication Imports
 API_KEY = creds.EB_API_KEY
@@ -24,30 +24,24 @@ DOMAIN = "test"
 
 ERROR = ""
 
-logger = logging.getLogger()
-logger.addHandler(logging.handlers.SMTPHandler(
-    mailhost=("smtp.mail.yahoo.com", 587),
-    fromaddr="boss@example.com",
-    toaddrs="me@example.com",
-    subject="EXCEPTION",
-    credentials=('smtpuser@example.com', 'MY SECRET PASSWORD'),
-    secure=()))
-
-
 # Create Flask App Instance. 
 app = Flask(__name__)
 
 # Returns the authenticated salesforce object we'll use to query, create, and update salesforce objects. 
 def getSalesforce():
-    sf = Salesforce(instance=SANDBOX_URL, username=USERNAME, password=PASSWORD, security_token=SANDBOX_SECURITY_TOKEN, domain=DOMAIN)
+    sf = Salesforce(instance=SANDBOX_URL, username=creds.SF_SANDBOX_USERNAME, password=PROD_PASSWORD, security_token=SANDBOX_SECURITY_TOKEN, domain=DOMAIN)
     return sf
 
 # Creates a salesforce account given the attendee data. 
 def createNewAccount(sf, attendee):
-    result = sf.Account.create(
-        {'Name':attendee['profile']['company']})
-    newAccountID = result['id']
-    print("Created new Account for "+attendee['profile']['company'])
+    result = ""
+    try:
+        result = sf.Account.create(
+            {'Name':attendee['profile']['company']})
+        newAccountID = result['id']
+        print("Created new Account for "+attendee['profile']['company'])
+    except simple_salesforce.exceptions.SalesforceMalformedRequest as e:
+        print(e)
     return newAccountID
 
 def createNewContact(sf, attendee, accountID):
@@ -66,15 +60,21 @@ def createCampaignMember(sf, attendee, campaignID, contactID):
     raceAnswer = ""
     raceFreeResponse = ""
     otherQuestions = ""
-    for question in attendee['answers']:
-        if "black, indigenous, and/or a person of color" in question['question']:
-            pocAnswer = question['answer']
-        if "What is your race?" in question['question']:
-            raceAnswer = question['answer']
-        if "Please Describe." == question['question']:
-            raceFreeResponse = question['answer']
-        else:
-            otherQuestions = otherQuestions+str(question['question'])+": \n"+str(question['answer'])+"\n"
+
+    try:
+        for question in attendee['answers']:
+            if "black, indigenous, and/or a person of color" in question['question']:
+                pocAnswer = question['answer']
+            if "What is your race?" in question['question']:
+                raceAnswer = question['answer']
+            if "Please Describe." == question['question']:
+                raceFreeResponse = question['answer']
+            else:
+                otherQuestions = otherQuestions+str(question['question'])+": \n"+str(question['answer'])+"\n"
+    except Exception as e:
+        print(e)
+        print("Failed to parse questions, may be blank or missing, skipping...")
+
     try:
         response = sf.CampaignMember.create(
             {'CampaignId':campaignID,
@@ -95,12 +95,11 @@ def createCampaignMember(sf, attendee, campaignID, contactID):
         print(e)
         print("Member may already exist, continuing process...")
         pass
-    #return response['id']
 
 def createOpportunity(sf, attendee, contactID, accountID, campaignID, api_url):
     r = requests.get(api_url, headers=AUTH_HEADER_EB, params={"expand":["category","promotional_code"]})
     order = r.json()
-    buyerQuery = sf.query("SELECT Id, Email, npsp__Primary_Affiliation__c, Primary_Affiliation_text__c FROM Contact WHERE Email = '{buyerEmail}'".format(buyerEmail=order['email']))
+    buyerQuery = sf.query(format_soql("SELECT Id, Email, npsp__Primary_Affiliation__c, Primary_Affiliation_text__c FROM Contact WHERE Email = '{buyerEmail}'".format(buyerEmail=order['email'].strip())))
     if buyerQuery['totalSize'] == 1:
         buyerID = buyerQuery['records'][0]['Id']
         sf.Contact.update(buyerID, {
@@ -154,88 +153,111 @@ def processOrder(api_url):
     print("Raw attendees data: ")
     print(attendees)
     for attendee in attendees['attendees']:
-        try:
-            sfCampaign = sf.query("SELECT Id FROM Campaign WHERE EventbriteSync__EventbriteId__c = '{ebEventID}'".format(ebEventID=attendee['event_id']))
-            campaignID = sfCampaign['records'][0]['Id']
-            print("Checking for an email match for "+attendee['profile']['name'])
-            #Search SF for contact with attendee email
-            queryResult = sf.query("SELECT Id, Email, npsp__Primary_Affiliation__c, Primary_Affiliation_text__c FROM Contact WHERE Email = '{attendeeEmail}'".format(attendeeEmail=attendee['profile']['email'])) 
-            # If contact with an email IS found. 
+        sfCampaign = sf.query(format_soql("SELECT Id FROM Campaign WHERE EventbriteSync__EventbriteId__c = '{ebEventID}'".format(ebEventID=attendee['event_id'])))
+        campaignID = sfCampaign['records'][0]['Id']
+        print("Checking for an email match for "+attendee['profile']['name'])
+        #Search SF for contact with attendee email
+        queryResult = sf.query("SELECT Id, Email, npsp__Primary_Affiliation__c, Primary_Affiliation_text__c FROM Contact WHERE Email = '{attendeeEmail}'".format(attendeeEmail=attendee['profile']['email'].strip())) 
+        # Check for edge case: Facebook Registration / Company Not Collected. 
+        if 'company' not in attendee['profile'].keys():
+            print("Company Name missing from record! Processing alternatively...")
             if queryResult['totalSize'] >= 1:
-                print("Email match(es) found!")
+                print("NO COMPANY- Email match found, updating contact FName/LName, making campaign member, making opportunity")
+                accountID = queryResult['records'][0]['npsp__Primary_Affiliation__c']
                 contactID = queryResult['records'][0]['Id']
-                print("Checking if primary affiliation is an exact match....")
-                # If Primary Affilation matches: Update contact FName/LName/Title, add campaign member. 
-                if queryResult['records'][0]['Primary_Affiliation_text__c'] == attendee['profile']['company']:
-                    accountID = queryResult['records'][0]['npsp__Primary_Affiliation__c']
-                    print("Matches Primary Affiliation! Updating records...")
+                sf.Contact.update(contactID, {
+                    'FirstName':attendee['profile']['first_name'],
+                    'LastName':attendee['profile']['last_name'],
+                })
+                createCampaignMember(sf, attendee, campaignID, contactID)
+                createOpportunity(sf, attendee, contactID, accountID, campaignID, api_url)
+            if queryResult['totalSize'] == 0:
+                print("NO COMPANY- Contact not found in salesforce. Creating new contact, campaign member, opportunity and proceeding with limited information...")
+                result = sf.Contact.create(
+                    {'Email':attendee['profile']['email'], 
+                    'FirstName':attendee['profile']['first_name'], 
+                    'LastName':attendee['profile']['last_name']})
+                newContactID = result['id']
+                createCampaignMember(sf, attendee, campaignID, newContactID)
+                createOpportunity(sf, attendee, newContactID, "", campaignID, api_url)
+        
+        # If contact with an email IS found. 
+        if queryResult['totalSize'] >= 1:
+            print("Email match(es) found!")
+            contactID = queryResult['records'][0]['Id']
+            print("Checking if primary affiliation is an exact match....")
+            # If Primary Affilation matches: Update contact FName/LName/Title, add campaign member. 
+            if queryResult['records'][0]['Primary_Affiliation_text__c'] == None:
+                queryResult['records'][0]['Primary_Affiliation_text__c'] = ""
+            if queryResult['records'][0]['Primary_Affiliation_text__c'].lower() == attendee['profile']['company'].lower():
+                accountID = queryResult['records'][0]['npsp__Primary_Affiliation__c']
+                print("Matches Primary Affiliation! Updating records...")
+                updateContactNormal(sf, attendee, contactID, accountID)
+                createCampaignMember(sf, attendee, campaignID, contactID)
+                createOpportunity(sf, attendee, contactID, accountID, campaignID, api_url)
+                print("Done!")
+            #If primary affiliation doesn't match
+            else:
+                print("Primary Affiliation does not match")
+                accountQuery = sf.query(format_soql("SELECT Id, Name from Account WHERE Name LIKE '{ebOrg}'".format(ebOrg=attendee['profile']['company'].strip())))
+                # If primary affiliaiton doesn't match, but it exists in salesforce update the contact and create the campaign member
+                if accountQuery['totalSize'] >= 1:
+                    print("Matching account found. Starting update contact, create campaign member, create opportunity.")
+                    accountID = accountQuery['records'][0]['Id']
+                    updateContactNormal(sf, attendee, contactID, accountID)
+                    createCampaignMember(sf, attendee, campaignID, queryResult['records'][0]['Id'])
+                    createOpportunity(sf, attendee, contactID, accountID, campaignID, api_url)
+                    print("Done!")
+                # If primary affiliation doesn't match and doesn't exist in salesforce, create new account, update the contact, and create campaign member
+                else: 
+                    print("No matching account found. Starting Create Account, Contact, CampaignMember")
+                    newAccountID = createNewAccount(sf, attendee)
+                    updateContactNormal(sf, attendee, contactID, newAccountID)
+                    createCampaignMember(sf, attendee, campaignID, contactID)
+                    createOpportunity(sf, attendee, contactID, newAccountID, campaignID, api_url)
+                    print("Done!")
+
+        # If contact with email is not found
+        elif queryResult['totalSize'] == 0: 
+            print("Email match failed. Checking if Account exists in Salesforce...")
+            accountQueryResult = sf.query(format_soql("SELECT Id, Name from Account WHERE Name LIKE '{ebOrg}'".format(ebOrg=attendee['profile']['company'].strip())))
+            #If the account doesn't exist in Salesforce, make the account, contact, campaign record
+            if accountQueryResult['totalSize'] == 0:
+                print("No matching Account. Starting create Account, Contact, and Campaign Member")
+                newAccountID = createNewAccount(sf, attendee)
+                newContactID = createNewContact(sf, attendee, newAccountID)
+                createCampaignMember(sf, attendee, campaignID, newContactID)
+                createOpportunity(sf, attendee, newContactID, newAccountID, campaignID, api_url)
+                print("Done!")
+                # Create new Account, new Contact, and the event affiliation. 
+            # if the account does exist, search by name
+            else:
+                print("Matching Account Found, searching by name...")
+                accountID = accountQueryResult['records'][0]['Id']
+                personQueryResult = sf.query(format_soql("SELECT Id, Name, Primary_Affiliation_text__c FROM Contact WHERE Name='{ebName}' AND Primary_Affiliation_text__c LIKE '{ebCompany}'".format(ebName=attendee['profile']['name'].strip(), ebCompany=attendee['profile']['company'].strip())))
+                # If there's an exact name match, update the contact, create the campaign member. 
+                if personQueryResult['totalSize'] == 1:
+                    print("Match found by Name and Company. Starting update contact, create campaign member, create opportunity.")
+                    contactID = personQueryResult['records'][0]['Id']
                     updateContactNormal(sf, attendee, contactID, accountID)
                     createCampaignMember(sf, attendee, campaignID, contactID)
                     createOpportunity(sf, attendee, contactID, accountID, campaignID, api_url)
                     print("Done!")
-                #If primary affiliation doesn't match
-                else:
-                    print("Primary Affiliation does not match")
-                    accountQuery = sf.query("SELECT Id, Name from Account WHERE Name = '{ebOrg}'".format(ebOrg=attendee['profile']['company']))
-                    # If primary affiliaiton doesn't match, but it exists in salesforce update the contact and create the campaign member
-                    if accountQuery['totalSize'] == 1:
-                        print("Matching account found. Starting update contact, create campaign member, create opportunity.")
-                        accountID = accountQuery['records'][0]['Id']
-                        updateContactNormal(sf, attendee, contactID, accountID)
-                        createCampaignMember(sf, attendee, campaignID, queryResult['records'][0]['Id'])
-                        createOpportunity(sf, attendee, contactID, accountID, campaignID, api_url)
-                        print("Done!")
-                    # If primary affiliation doesn't match and doesn't exist in salesforce, create new account, update the contact, and create campaign member
-                    else: 
-                        print("No matching account found. Starting Create Account, Contact, CampaignMember")
-                        newAccountID = createNewAccount(sf, attendee)
-                        updateContactNormal(sf, attendee, contactID, newAccountID)
-                        createCampaignMember(sf, attendee, campaignID, contactID)
-                        createOpportunity(sf, attendee, contactID, newAccountID, campaignID, api_url)
-                        print("Done!")
-
-            # If contact with email is not found
-            elif queryResult['totalSize'] == 0: 
-                print("Email match failed. Checking if Account exists in Salesforce...")
-                accountQueryResult = sf.query("SELECT Id, Name from Account WHERE Name = '{ebOrg}'".format(ebOrg=attendee['profile']['company']))
-                #If the account doesn't exist in Salesforce, make the account, contact, campaign record
-                if accountQueryResult['totalSize'] == 0:
-                    print("No matching Account. Starting create Account, Contact, and Campaign Member")
-                    newAccountID = createNewAccount(sf, attendee)
-                    newContactID = createNewContact(sf, attendee, newAccountID)
+                else: 
+                    print("Person not found. Starting create new contact, campaign member, opportunity.")
+                    # SF create new contact in account matched in "accountQueryResult"
+                    newContactID = createNewContact(sf, attendee, accountID)
+                    # SF create new Campaign Member record with new ContactID and the Campaign ID from sfCampaign. 
                     createCampaignMember(sf, attendee, campaignID, newContactID)
-                    createOpportunity(sf, attendee, newContactID, newAccountID, campaignID, api_url)
+                    createOpportunity(sf, attendee, newContactID, accountID, campaignID, api_url)
                     print("Done!")
-                    # Create new Account, new Contact, and the event affiliation. 
-                # if the account does exist, search by name
-                else:
-                    print("Matching Account Found, searching by name...")
-                    accountID = accountQueryResult['records'][0]['Id']
-                    personQueryResult = sf.query("SELECT Id, Name, Primary_Affiliation_text__c FROM Contact WHERE Name='{ebName}' AND Primary_Affiliation_text__c='{ebCompany}'".format(ebName=attendee['profile']['name'], ebCompany=attendee['profile']['company']))
-                    # If there's an exact name match, update the contact, create the campaign member. 
-                    if personQueryResult['totalSize'] == 1:
-                        print("Match found by Name and Company. Starting update contact, create campaign member, create opportunity.")
-                        contactID = personQueryResult['records'][0]['Id']
-                        updateContactNormal(sf, attendee, contactID, accountID)
-                        createCampaignMember(sf, attendee, campaignID, contactID)
-                        createOpportunity(sf, attendee, contactID, accountID, campaignID, api_url)
-                        print("Done!")
-                    else: 
-                        print("Person not found. Starting create new contact, campaign member, opportunity.")
-                        # SF create new contact in account matched in "accountQueryResult"
-                        newContactID = createNewContact(sf, attendee, accountID)
-                        # SF create new Campaign Member record with new ContactID and the Campaign ID from sfCampaign. 
-                        createCampaignMember(sf, attendee, campaignID, newContactID)
-                        createOpportunity(sf, attendee, newContactID, accountID, campaignID, api_url)
-                        print("Done!")
-        except Exception as e:
-            print("An unhandled Exception occured while processing "+attendee['profile']['first_name']+"'s registration.")
-            print(e)
 
+def processCheckin(api_url):
+    sf = getSalesforce()
+    registration = requests.get(api_url, headers=AUTH_HEADER_EB, params={"expand":"category","expand":"promotional_code","expand":"promo_code"})
+    registration = registration.json()
+    
 
-
-
-        
 
 
 
@@ -256,6 +278,9 @@ def respond():
     if (action == "order.placed"):
         processOrder(requestJSON['api_url'])
         return Response(status=200)
+    if (action == "attendee.checked_in"):
+        processCheckin(requestJSON['api_url'])
+        return Response(status=200)
     return Response(status=200)
 
 # def lambda_handler(event, context):     # For running in the cloud. 
@@ -275,7 +300,7 @@ def respond():
 
 @app.route('/', methods=['GET'])
 def respondGet():
-    return "App is running!"
+    return "App is running! Ready to recieve POST requests from Eventbrite."
 
 if __name__ == '__main__':
    app.run()
