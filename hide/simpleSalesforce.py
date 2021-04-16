@@ -1,7 +1,7 @@
 import requests
 import creds
 import json
-from simple_salesforce import Salesforce
+from simple_salesforce import Salesforce, format_soql
 SANDBOX_URL = creds.SF_SANDBOX_URL
 PROD_URL = creds.SF_PROD_URL
 USERNAME = creds.SF_USERNAME
@@ -12,7 +12,7 @@ PROD_SECURITY_TOKEN = creds.SF_PROD_SECURITY_TOKEN
 DOMAIN = "test"
 
 # Sandbox sf Object
-sf = Salesforce(instance=SANDBOX_URL, username=USERNAME, password=PASSWORD, security_token=SANDBOX_SECURITY_TOKEN, domain=DOMAIN)
+sf = Salesforce(instance=SANDBOX_URL, username=creds.SF_SANDBOX_USERNAME, password=PROD_PASSWORD, security_token=SANDBOX_SECURITY_TOKEN, domain=DOMAIN)
 # Prod sf object
 #sf = Salesforce(instance=PROD_URL, username=USERNAME, password=PROD_PASSWORD, security_token=PROD_SECURITY_TOKEN, domain=DOMAIN)
 
@@ -112,8 +112,12 @@ sf = Salesforce(instance=SANDBOX_URL, username=USERNAME, password=PASSWORD, secu
 # print(result)
 
 # sf.Payment.create({})
-result = sf.Opportunity.create({'AccountId':'001f400000konYXAAY', 'npsp__Primary_Contact__c':'0035G00001gFPaEQAW', 'EventbriteSync__Buyer__c':'0035G00001gFPaEQAW', 'StageName':'posted', 'CloseDate':"2021-03-25T19:23:04Z", 'CampaignId':'7015G0000003a4iQAA', 'Order_Number__c':'1686870425', 'Ticket_Type__c':"Nonmember Ticket", 'RecordTypeId':'012f4000000JdASAA0', 'Name':'tempName', 'amount':'20.00'})
-print(result)
-opID = result['id']
-#result = sf.npe01__OppPayment__c.create({'npe01__Opportunity__c':opID, 'npe01__Paid__c':True, 'Payment_Contact__c':'0038A00000ZVhpbQAD', 'Ready_for_Invoice__c':True, 'npe01__Payment_Amount__c':'50.00'})
+# result = sf.Opportunity.create({'AccountId':'0017h00000XpNWPAA3', 'npsp__Primary_Contact__c':'0037h00000RkN8TAAV', 'EventbriteSync__Buyer__c':'0037h00000RkN8TAAV', 'StageName':'posted', 'CloseDate':"2021-03-25T19:23:04Z", 'CampaignId':'7017h000000xOe6AAE', 'Order_Number__c':'1686870425', 'Ticket_Type__c':"Nonmember Ticket", 'RecordTypeId':'012f4000000JdASAA0', 'Name':'tempName', 'amount':'20.00'})
+# print(result)
+# opID = result['id']
+# result = sf.npe01__OppPayment__c.create({'npe01__Opportunity__c':opID, 'npe01__Paid__c':True, 'Payment_Contact__c':'0038A00000ZVhpbQAD', 'Ready_for_Invoice__c':True, 'npe01__Payment_Amount__c':'50.00'})
 #print(result)
+# sfCM = sf.query("SELECT Id FROM CampaignMember WHERE Eventbrite_Attendee_ID__c = '{ebAttendee}'".format(ebEventID=attendee['event_id']))
+searchterm = "Mobile Loaves & Fishes, Inc."
+qs = sf.quick_search(format_soql("{{Mobile Loaves & Fishes, Inc.}}"))
+print(qs)
