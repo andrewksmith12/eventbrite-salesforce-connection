@@ -143,8 +143,9 @@ def createEvent(api_url):
         'Description':eventData['description']['text'], 
         'EventbriteSync__EventbriteId__c':eventData['id'], 
         'RecordTypeId':'012f4000000JcuJAAS'})
-    print('Event\" '+eventData['name']['text']+'\" created.')
+    print('Event \"'+eventData['name']['text']+'\" created.')
     print(sf_respond)
+    return sf_respond['Id']
 
 def processOrder(api_url):
     sf = getSalesforce()
