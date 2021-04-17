@@ -1,3 +1,0 @@
-TODO: Update Campain Members to match demographic data and push that to SF. 
-TODO: Create logic to find or create buyer profile. 
-    If email matches, update contact and use contact. If email doesn't match, create contact. 

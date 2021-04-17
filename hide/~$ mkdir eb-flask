@@ -1,7 +1,0 @@
-~$ mkdir eb-flask
-~$ cd eb-flask
-~/eb-flask$ virtualenv virt
-~$ source virt/bin/activate
-(virt) ~/eb-flask$
-(virt)~/eb-flask$ pip install flask==1.1.2
-(virt)~/eb-flask$ pip freeze > requirements.txt (saves installed components to requirements.txt)
