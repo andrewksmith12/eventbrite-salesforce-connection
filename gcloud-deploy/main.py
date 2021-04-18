@@ -86,7 +86,7 @@ def createCampaignMember(sf, attendee, campaignID, contactID):
             'Total_Paid__c':attendee['costs']['base_price']['major_value'],
             'Ticket_Type__c':attendee['ticket_class_name'],
             'Status':attendee['status'],
-            'Identifies_as_BIPOC__c':pocAnswer,
+            'Identifies_as_BIPOC__c':pocAnswer.replace(" | ", ";"),
             'Race__c':raceAnswer,
             'Race_self_describe__c':raceFreeResponse,
             'Comments__c':otherQuestions})
