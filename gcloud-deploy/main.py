@@ -4,14 +4,18 @@ import requests
 from flask import Flask, request, Response
 import json
 from simple_salesforce import Salesforce, format_soql
+TEST_EVENT_URL = "https://www.eventbriteapi.com/v3/events/151257855317/"
+
+
+EB_API_KEY = creds.EB_API_KEY
 
 # Eventbrite API Authentication Imports
 BASE_URL = 'https://www.eventbriteapi.com/v3/'
 AUTH_HEADER_EB = {
-    'Authorization' : 'Bearer {token}'.format(token=creds.EB_API_KEY)
+    'Authorization' : 'Bearer {token}'.format(token=EB_API_KEY)
 }
-# Create Flask App Instance. 
-app = Flask(__name__)
+# Create Flask App Instance. REMOVED- Used for testing and in deployment via Flask. Not applicable for Cloud Function Deployment. 
+# app = Flask(__name__)
 
 # Returns the authenticated salesforce object we'll use to query, create, and update salesforce objects. 
 def getSalesforce():
@@ -259,43 +263,57 @@ def processCheckin(api_url):
 ## Main function that is invoked when the webhook is invoked. 
 ## Eventbrite API sends a POST request to the webhook. POST data is stored in request, convert it to JSON. The keys of the dict are 'api_url' which contains the URL with the data. 
 ## and config, which is a dictionary that contains the action (i.e order.created), user_id, endpoint_url (webhook address), and 'webhook_id'
-@app.route('/', methods=['POST'])
-def respond():
-    print("request recieved")
-    print(request.data)
-    requestJSON = request.json #Convert request object to dictionary
-    action = requestJSON['config']['action']
-    if (action == "event.published"):
-        createEvent(requestJSON['api_url'])
-        return Response(status=200)
-    if (action == "order.placed"):
-        processOrder(requestJSON['api_url'])
-        return Response(status=200)
-    if (action == "attendee.checked_in"):
-        processCheckin(requestJSON['api_url'])
-        return Response(status=200)
-    return Response(status=200)
-
-# def lambda_handler(event, context):     # For running in the cloud. 
-#     if event['httpMethod'] == "GET":
-#         return "Function is online!"
-#     if event["httpMethod"] == "POST":
-#         requestJSON = (event['body'])
-#         action = requestJSON['config']['action']
-#         if (action == "event.published"):
-#             createEvent(requestJSON['api_url'])
-#             return Response(status=200)
-#         if (action == "order.created"):
-#             processOrder(requestJSON['api_url'])
-#             return Response(status=200)
+# @app.route('/', methods=['POST'])
+# def respond():
+#     print("request recieved")
+#     print(request.data)
+#     requestJSON = request.json #Convert request object to dictionary
+#     action = requestJSON['config']['action']
+#     if (action == "event.published"):
+#         createEvent(requestJSON['api_url'])
+#         return Response(status=200)
+#     if (action == "order.placed"):
+#         processOrder(requestJSON['api_url'])
+#         return Response(status=200)
+#     if (action == "attendee.checked_in"):
+#         processCheckin(requestJSON['api_url'])
+#         return Response(status=200)
 #     return Response(status=200)
 
+# Main function invoked by Google Cloud Functions when responding to requests. 
+# @app.route('/')
+def respond(request):
+    print("request recieved")
+    requestJSON = request.get_json() #Convert request object to dictionary
+    print(requestJSON)
+    if requestJSON:
+        action = requestJSON['config']['action']
+        if (action == "event.published"):
+            createEvent(requestJSON['api_url'])
+            return Response(status=200)
+        if (action == "order.placed"):
+            processOrder(requestJSON['api_url'])
+            return Response(status=200)
+        if (action == "attendee.checked_in"):
+            processCheckin(requestJSON['api_url'])
+            return Response(status=200)
+        if (action == "test"):
+            sf = getSalesforce()
+            r = requests.get("https://www.eventbriteapi.com/v3/users/me", headers=AUTH_HEADER_EB)
+            if r.status_code == 200:
+                eventID = createEvent(TEST_EVENT_URL)
+                sf.Campaign.delete(eventID)
+                return Response("Recieved request from eventbrite. Successfully authenticated to Eventbrite and Salesforce.")
+            else:
+                return Response("Check credentials file. Invalid credentials detected.")
+    return Response("Ready to process data.")
 
-@app.route('/', methods=['GET'])
-def respondGet():
-    return "App is running! Ready to recieve POST requests from Eventbrite."
 
-if __name__ == '__main__':
-   app.run()
+# @app.route('/', methods=['GET'])
+# def respondGet():
+#     return "App is running! Ready to recieve POST requests from Eventbrite."
+
+# if __name__ == '__main__':
+#    app.run()
 
 # processOrder(BASE_URL+"orders/1656541919")    

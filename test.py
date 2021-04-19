@@ -35,7 +35,7 @@ import requests
 # attendees = r.json()
 
 
-sf = main.getSalesforce()
+# sf = main.getSalesforce()
 
 
 
@@ -56,3 +56,8 @@ sf = main.getSalesforce()
 # print(result)
 
 # sf.Campaign.delete('7017h000000xP5JAAU')
+
+r = requests({'config':{'action':'gcloud-test'}})
+print(r.get_json)
+response = main.respond(r)
+print(response)
