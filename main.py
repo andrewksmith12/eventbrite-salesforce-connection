@@ -6,29 +6,21 @@ import json
 from simple_salesforce import Salesforce, format_soql
 
 # Eventbrite API Authentication Imports
-API_KEY = creds.EB_API_KEY
-TEST_API_KEY = creds.EB_TEST_API_KEY
 BASE_URL = 'https://www.eventbriteapi.com/v3/'
 AUTH_HEADER_EB = {
-    'Authorization' : 'Bearer {token}'.format(token=TEST_API_KEY)
+    'Authorization' : 'Bearer {token}'.format(token=creds.EB_API_KEY)
 }
-# Salesforce API Authentication Imports
-SANDBOX_URL = creds.SF_SANDBOX_URL
-PROD_URL = creds.SF_PROD_URL
-USERNAME = creds.SF_USERNAME
-PASSWORD = creds.SF_PASSWORD
-SANDBOX_SECURITY_TOKEN = creds.SF_SANDBOX_SECURITY_TOKEN
-PROD_SECURITY_TOKEN = creds.SF_PROD_SECURITY_TOKEN
-DOMAIN = "test"
-
-ERROR = ""
-
 # Create Flask App Instance. 
 app = Flask(__name__)
 
 # Returns the authenticated salesforce object we'll use to query, create, and update salesforce objects. 
 def getSalesforce():
-    sf = Salesforce(instance=SANDBOX_URL, username=creds.SF_SANDBOX_USERNAME, password=PASSWORD, security_token=SANDBOX_SECURITY_TOKEN, domain=DOMAIN)
+    if creds.SF_OPERATING_MODE == "test":
+        sf = Salesforce(instance=creds.SF_SANDBOX_URL, username=creds.SF_SANDBOX_USERNAME, password=creds.SF_SANDBOX_PASSWORD, security_token=creds.SF_SANDBOX_SECURITY_TOKEN, domain="test")
+    elif creds.SF_OPERATING_MODE == "login":
+        sf = Salesforce(instance=creds.SF_PROD_URL, username=creds.SF_USERNAME, password=creds.SF_PASSWORD, security_token=creds.SF_PROD_SECURITY_TOKEN, domain="login")
+    else:
+        print("Invalid Login Domain. Check/Update creds.py!")
     return sf
 
 # Creates a salesforce account given the attendee data. 
