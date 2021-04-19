@@ -17,7 +17,6 @@ SANDBOX_URL = creds.SF_SANDBOX_URL
 PROD_URL = creds.SF_PROD_URL
 USERNAME = creds.SF_USERNAME
 PASSWORD = creds.SF_PASSWORD
-PROD_PASSWORD = creds.SF_PROD_PASSWORD
 SANDBOX_SECURITY_TOKEN = creds.SF_SANDBOX_SECURITY_TOKEN
 PROD_SECURITY_TOKEN = creds.SF_PROD_SECURITY_TOKEN
 DOMAIN = "test"
@@ -29,7 +28,7 @@ app = Flask(__name__)
 
 # Returns the authenticated salesforce object we'll use to query, create, and update salesforce objects. 
 def getSalesforce():
-    sf = Salesforce(instance=SANDBOX_URL, username=creds.SF_SANDBOX_USERNAME, password=PROD_PASSWORD, security_token=SANDBOX_SECURITY_TOKEN, domain=DOMAIN)
+    sf = Salesforce(instance=SANDBOX_URL, username=creds.SF_SANDBOX_USERNAME, password=PASSWORD, security_token=SANDBOX_SECURITY_TOKEN, domain=DOMAIN)
     return sf
 
 # Creates a salesforce account given the attendee data. 
