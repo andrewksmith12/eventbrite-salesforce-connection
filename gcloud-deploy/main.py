@@ -4,8 +4,8 @@ import requests
 from flask import Flask, request, Response
 import json
 from simple_salesforce import Salesforce, format_soql
+import smtplib
 TEST_EVENT_URL = "https://www.eventbriteapi.com/v3/events/151257855317/"
-
 
 EB_API_KEY = creds.EB_API_KEY
 
@@ -14,6 +14,13 @@ BASE_URL = 'https://www.eventbriteapi.com/v3/'
 AUTH_HEADER_EB = {
     'Authorization' : 'Bearer {token}'.format(token=EB_API_KEY)
 }
+
+gmail_user = "teamtechnofly@gmail.com"
+gmail_password = "jvrkiludpjmrqdiz"
+email_server = smtplib.SMTP_SSL('smtp.gmail.com', 465)
+
+
+
 # Create Flask App Instance. REMOVED- Used for testing and in deployment via Flask. Not applicable for Cloud Function Deployment. 
 # app = Flask(__name__)
 
@@ -55,17 +62,20 @@ def createCampaignMember(sf, attendee, campaignID, contactID):
     raceAnswer = ""
     raceFreeResponse = ""
     otherQuestions = ""
+    howDidYouHearAboutUs = ""
 
     try:
         for question in attendee['answers']:
             if "black, indigenous, and/or a person of color" in question['question']:
                 pocAnswer = question['answer']
-            if "What is your race?" in question['question']:
+            elif "What is your race?" in question['question']:
                 raceAnswer = question['answer']
-            if "Please Describe." == question['question']:
+            elif "Please Describe." == question['question']:
                 raceFreeResponse = question['answer']
+            elif "How did you hear about this event?" in question['question']:
+                howDidYouHearAboutUs = question['answer']
             else:
-                otherQuestions = otherQuestions+str(question['question'])+": \n"+str(question['answer'])+"\n"
+                otherQuestions = otherQuestions+str(question['question'])+": "+str(question['answer'])+"\n"
     except Exception as e:
         print(e)
         print("Failed to parse questions, may be blank or missing, skipping...")
@@ -84,10 +94,17 @@ def createCampaignMember(sf, attendee, campaignID, contactID):
             'Identifies_as_BIPOC__c':pocAnswer.replace(" | ", ";"),
             'Race__c':raceAnswer,
             'Race_self_describe__c':raceFreeResponse,
+            'How_did_you_hear_about_this_event__c':howDidYouHearAboutUs,
             'Comments__c':otherQuestions})
         print("Created campaign member for "+attendee['profile']['first_name']+" successfully.")
     except Exception as e:
-        print("Error on create campaign member for "+attendee['profile']['first_name'])
+        email_server.ehlo()
+        email_server.login(gmail_user, gmail_password)
+        message = """Subject: Error in Create Campaign Member
+        There was an error creating a Campaign Member for {fname} {lname}, the individual is likely already a member of the campaign and purchased multiple tickets.
+        Eventbrite Order ID: {ebOrder}, Eventbrite Attendee ID: {ebAttendee}, Salesforce Contact ID: {sfContact}""".format(fname=attendee['profile']['first_name'], lname=attendee['profile']['last_name'], ebOrder=attendee['order_id'], ebAttendee=attendee['id'], sfContact=contactID)
+        email_server.sendmail(from_addr=gmail_user, to_addrs="andrewkeithsmith12@gmail.com", msg=message)
+        print("Error on create campaign member for "+attendee['profile']['first_name']+", error emailed")
         print(e)
         print("Member may already exist, continuing process...")
         pass
@@ -110,9 +127,9 @@ def createOpportunity(sf, attendee, contactID, accountID, campaignID, api_url):
         })
         buyerID = createResponse['id']
     if "promotional_code" in attendee.keys():
-        sf.Opportunity.create({'AccountId':accountID, 'npsp__Primary_Contact__c':contactID, 'EventbriteSync__Buyer__c':buyerID, 'amount':attendee['costs']['gross']['major_value'], 'StageName':'posted', 'CloseDate':attendee['created'], 'CampaignId':campaignID, 'Order_Number__c':attendee['order_id'], 'Ticket_Type__c':attendee['ticket_class_name'], 'RecordTypeId':'012f4000000JdASAA0', 'Name':'tempName','Coupon_Code__c':attendee['promotional_code']['code']})
+        sf.Opportunity.create({'AccountId':accountID, 'npsp__Primary_Contact__c':contactID, 'EventbriteSync__Buyer__c':buyerID, 'amount':attendee['costs']['gross']['major_value'], 'StageName':'posted', 'CloseDate':attendee['created'], 'CampaignId':campaignID, 'Order_Number__c':attendee['order_id'], 'Ticket_Type__c':attendee['ticket_class_name'], 'RecordTypeId':'012f4000000JdASAA0', 'Name':'tempName','Coupon_Code__c':attendee['promotional_code']['code']}) # Name is by Salesforce when processed by NPSP
     else:
-        sf.Opportunity.create({'AccountId':accountID, 'npsp__Primary_Contact__c':contactID, 'EventbriteSync__Buyer__c':buyerID, 'amount':attendee['costs']['gross']['major_value'], 'StageName':'posted', 'CloseDate':attendee['created'], 'CampaignId':campaignID, 'Order_Number__c':attendee['order_id'], 'Ticket_Type__c':attendee['ticket_class_name'], 'RecordTypeId':'012f4000000JdASAA0', 'Name':'tempName'})
+        sf.Opportunity.create({'AccountId':accountID, 'npsp__Primary_Contact__c':contactID, 'EventbriteSync__Buyer__c':buyerID, 'amount':attendee['costs']['gross']['major_value'], 'StageName':'posted', 'CloseDate':attendee['created'], 'CampaignId':campaignID, 'Order_Number__c':attendee['order_id'], 'Ticket_Type__c':attendee['ticket_class_name'], 'RecordTypeId':'012f4000000JdASAA0', 'Name':'tempName'}) # Name is by Salesforce when processed by NPSP
     print("Opportunity created for "+attendee['profile']['first_name'])
 
 def updateContactNormal(sf, attendee, contactID, accountID):
@@ -257,7 +274,7 @@ def processCheckin(api_url):
     if campaignMemberQuery['totalSize'] >= 1:
         print("Campaign Member found, updating status to Checked In")
         campaignMemberID = campaignMemberQuery['records'][0]['Id']
-        result = sf.CampaignMember.update(campaignMemberID, {'status':'Attending'})
+        result = sf.CampaignMember.update(campaignMemberID, {'Attendee_Status__c':'Checked In'})
     else:
         print("Campaign member not found, skipping...")
 ## Main function that is invoked when the webhook is invoked. 

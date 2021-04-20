@@ -4,8 +4,8 @@ import requests
 from flask import Flask, request, Response
 import json
 from simple_salesforce import Salesforce, format_soql
+import smtplib
 TEST_EVENT_URL = "https://www.eventbriteapi.com/v3/events/151257855317/"
-
 
 EB_API_KEY = creds.EB_API_KEY
 
@@ -14,6 +14,13 @@ BASE_URL = 'https://www.eventbriteapi.com/v3/'
 AUTH_HEADER_EB = {
     'Authorization' : 'Bearer {token}'.format(token=EB_API_KEY)
 }
+
+gmail_user = "teamtechnofly@gmail.com"
+gmail_password = "jvrkiludpjmrqdiz"
+email_server = smtplib.SMTP_SSL('smtp.gmail.com', 465)
+
+
+
 # Create Flask App Instance. REMOVED- Used for testing and in deployment via Flask. Not applicable for Cloud Function Deployment. 
 # app = Flask(__name__)
 
@@ -91,7 +98,13 @@ def createCampaignMember(sf, attendee, campaignID, contactID):
             'Comments__c':otherQuestions})
         print("Created campaign member for "+attendee['profile']['first_name']+" successfully.")
     except Exception as e:
-        print("Error on create campaign member for "+attendee['profile']['first_name'])
+        email_server.ehlo()
+        email_server.login(gmail_user, gmail_password)
+        message = """Subject: Error in Create Campaign Member
+        There was an error creating a Campaign Member for {fname} {lname}, the individual is likely already a member of the campaign and purchased multiple tickets.
+        Eventbrite Order ID: {ebOrder}, Eventbrite Attendee ID: {ebAttendee}, Salesforce Contact ID: {sfContact}""".format(fname=attendee['profile']['first_name'], lname=attendee['profile']['last_name'], ebOrder=attendee['order_id'], ebAttendee=attendee['id'], sfContact=contactID)
+        email_server.sendmail(from_addr=gmail_user, to_addrs="andrewkeithsmith12@gmail.com", msg=message)
+        print("Error on create campaign member for "+attendee['profile']['first_name']+", error emailed")
         print(e)
         print("Member may already exist, continuing process...")
         pass
@@ -261,7 +274,7 @@ def processCheckin(api_url):
     if campaignMemberQuery['totalSize'] >= 1:
         print("Campaign Member found, updating status to Checked In")
         campaignMemberID = campaignMemberQuery['records'][0]['Id']
-        result = sf.CampaignMember.update(campaignMemberID, {'status':'Attending'})
+        result = sf.CampaignMember.update(campaignMemberID, {'Attendee_Status__c':'Checked In'})
     else:
         print("Campaign member not found, skipping...")
 ## Main function that is invoked when the webhook is invoked. 
