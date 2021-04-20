@@ -3,5 +3,8 @@
 # sf = Salesforce(instance="missioncapitalorg--technofly.my.salesforce.com", username="teamtechnofly@gmail.com.technofly", password="enzyme-nosed-THINK-vendee1", security_token="Q10ctTZkfq9URr5EK7Cp1F6f", domain="test")
 # print(sf)
 
-from main import AUTH_HEADER_EB
-print(AUTH_HEADER_EB)
+from main import getSalesforce
+import json
+sf = getSalesforce()
+response = sf.query("SELECT Comments__c FROM CampaignMember WHERE id = '00v7h000004zPfiAAE'")
+print(json.dumps(response['records'][0], indent=2))
