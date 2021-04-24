@@ -18,6 +18,11 @@ class TestApplication(unittest.TestCase):
         eventID = createEvent(TEST_EVENT_URL)
         sf = getSalesforce()
         sf.Campaign.delete(eventID)
+    def testProcessOrder(self):
+        eventID = createEvent(TEST_EVENT_URL)
+        sf = getSalesforce()
+        processOrder()
+        sf.Campaign.delete(eventID)
 
 if __name__ == '__main__':
     unittest.main()

@@ -5,7 +5,7 @@ import requests
 from flask import Flask, request, Response
 import json
 from simple_salesforce import Salesforce, format_soql
-import smtplib
+from threading import Thread
 TEST_EVENT_URL = "https://www.eventbriteapi.com/v3/events/151257855317/"
 
 EB_API_KEY = creds.EB_API_KEY
@@ -15,12 +15,6 @@ BASE_URL = 'https://www.eventbriteapi.com/v3/'
 AUTH_HEADER_EB = {
     'Authorization' : 'Bearer {token}'.format(token=EB_API_KEY)
 }
-
-gmail_user = "teamtechnofly@gmail.com"
-gmail_password = "jvrkiludpjmrqdiz"
-email_server = smtplib.SMTP_SSL('smtp.gmail.com', 465)
-
-
 
 # Create Flask App Instance. REMOVED- Used for testing and in deployment via Flask. Not applicable for Cloud Function Deployment. 
 # app = Flask(__name__)
@@ -67,13 +61,13 @@ def createCampaignMember(sf, attendee, campaignID, contactID):
 
     try:
         for question in attendee['answers']:
-            if "black, indigenous, and/or a person of color" in question['question']:
+            if "black, indigenous, and/or a person of color" in question['question'].lower():
                 pocAnswer = question['answer']
-            elif "What is your race?" in question['question']:
+            elif "what is your race?" in question['question'].lower():
                 raceAnswer = question['answer']
-            elif "Please Describe." == question['question']:
+            elif "please describe." == question['question'].lower():
                 raceFreeResponse = question['answer']
-            elif "How did you hear about this event?" in question['question']:
+            elif "how did you hear about this event?" in question['question'].lower():
                 howDidYouHearAboutUs = question['answer']
             else:
                 otherQuestions = otherQuestions+str(question['question'])+": "+str(question['answer'])+"\n"
@@ -92,6 +86,7 @@ def createCampaignMember(sf, attendee, campaignID, contactID):
             'Total_Paid__c':attendee['costs']['base_price']['major_value'],
             'Ticket_Type__c':attendee['ticket_class_name'],
             'Status':attendee['status'],
+            'Attendee_Status__c':'Attending',
             'Identifies_as_BIPOC__c':pocAnswer.replace(" | ", ";"),
             'Race__c':raceAnswer,
             'Race_self_describe__c':raceFreeResponse,
@@ -99,13 +94,6 @@ def createCampaignMember(sf, attendee, campaignID, contactID):
             'Comments__c':otherQuestions})
         print("Created campaign member for "+attendee['profile']['first_name']+" successfully.")
     except Exception as e:
-        email_server.ehlo()
-        email_server.login(gmail_user, gmail_password)
-        message = """Subject: Error in Create Campaign Member
-        There was an error creating a Campaign Member for {fname} {lname}, the individual is likely already a member of the campaign and purchased multiple tickets.
-        Eventbrite Order ID: {ebOrder}, Eventbrite Attendee ID: {ebAttendee}, Salesforce Contact ID: {sfContact}""".format(fname=attendee['profile']['first_name'], lname=attendee['profile']['last_name'], ebOrder=attendee['order_id'], ebAttendee=attendee['id'], sfContact=contactID)
-        email_server.sendmail(from_addr=gmail_user, to_addrs="andrewkeithsmith12@gmail.com", msg=message)
-        print("Error on create campaign member for "+attendee['profile']['first_name']+", error emailed")
         print(e)
         print("Member may already exist, continuing process...")
         pass
@@ -186,7 +174,7 @@ def processOrder(api_url):
                 })
                 createCampaignMember(sf, attendee, campaignID, contactID)
                 createOpportunity(sf, attendee, contactID, accountID, campaignID, api_url)
-            if queryResult['totalSize'] == 0:
+            elif queryResult['totalSize'] == 0:
                 print("NO COMPANY- Contact not found in salesforce. Creating new contact, campaign member, opportunity and proceeding with limited information...")
                 result = sf.Contact.create(
                     {'Email':attendee['profile']['email'], 
@@ -204,7 +192,7 @@ def processOrder(api_url):
             # If Primary Affilation matches: Update contact FName/LName/Title, add campaign member. 
             if queryResult['records'][0]['Primary_Affiliation_text__c'] == None:
                 queryResult['records'][0]['Primary_Affiliation_text__c'] = ""
-            if queryResult['records'][0]['Primary_Affiliation_text__c'].lower() == attendee['profile']['company'].lower():
+            elif queryResult['records'][0]['Primary_Affiliation_text__c'].lower() == attendee['profile']['company'].lower():
                 accountID = queryResult['records'][0]['npsp__Primary_Affiliation__c']
                 print("Matches Primary Affiliation! Updating records...")
                 updateContactNormal(sf, attendee, contactID, accountID)
@@ -270,33 +258,18 @@ def processOrder(api_url):
 def processCheckin(api_url):
     sf = getSalesforce()
     # Find CM record in SF, mark as checked in. 
-    registration = requests.get(api_url, headers=AUTH_HEADER_EB, params={"expand":"category","expand":"promotional_code","expand":"promo_code"})
-    campaignMemberQuery = sf.query(format_soql("SELECT Id, Primary_Affiliation_text__c FROM Contact WHERE Email = '{buyerEmail}'".format(buyerEmail=order['email'].strip().replace('"', '\\"').replace("'", "\\'"))))
+    registration = requests.get('https://www.eventbriteapi.com/v3/events/151344937783/attendees/2363974039/', headers=AUTH_HEADER_EB, params={"expand":"category","expand":"promotional_code","expand":"promo_code"})
+    registration = registration.json()
+    print("Processing checkin...")
+    print(registration)
+    campaignMemberQuery = sf.query(format_soql("SELECT Id FROM CampaignMember WHERE Eventbrite_Attendee_ID__c = '{attendeeID}'".format(attendeeID=registration['id'].strip().replace('"', '\\"').replace("'", "\\'"))))
     if campaignMemberQuery['totalSize'] >= 1:
         print("Campaign Member found, updating status to Checked In")
         campaignMemberID = campaignMemberQuery['records'][0]['Id']
         result = sf.CampaignMember.update(campaignMemberID, {'Attendee_Status__c':'Checked In'})
+        print("Done.")
     else:
         print("Campaign member not found, skipping...")
-## Main function that is invoked when the webhook is invoked. 
-## Eventbrite API sends a POST request to the webhook. POST data is stored in request, convert it to JSON. The keys of the dict are 'api_url' which contains the URL with the data. 
-## and config, which is a dictionary that contains the action (i.e order.created), user_id, endpoint_url (webhook address), and 'webhook_id'
-# @app.route('/', methods=['POST'])
-# def respond():
-#     print("request recieved")
-#     print(request.data)
-#     requestJSON = request.json #Convert request object to dictionary
-#     action = requestJSON['config']['action']
-#     if (action == "event.published"):
-#         createEvent(requestJSON['api_url'])
-#         return Response(status=200)
-#     if (action == "order.placed"):
-#         processOrder(requestJSON['api_url'])
-#         return Response(status=200)
-#     if (action == "attendee.checked_in"):
-#         processCheckin(requestJSON['api_url'])
-#         return Response(status=200)
-#     return Response(status=200)
 
 # Main function invoked by Google Cloud Functions when responding to requests. 
 # @app.route('/')
@@ -312,7 +285,7 @@ def respond(request):
         if (action == "order.placed"):
             processOrder(requestJSON['api_url'])
             return Response(status=200)
-        if (action == "attendee.checked_in"):
+        if (action == "attendee.checked_in" or action == "barcode.checked_in"):
             processCheckin(requestJSON['api_url'])
             return Response(status=200)
         if (action == "test"):
