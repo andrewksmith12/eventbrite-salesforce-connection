@@ -5,7 +5,7 @@ import requests
 from flask import Flask, request, Response
 import json
 from simple_salesforce import Salesforce, format_soql
-from threading import Thread
+
 TEST_EVENT_URL = "https://www.eventbriteapi.com/v3/events/151257855317/"
 
 EB_API_KEY = creds.EB_API_KEY
