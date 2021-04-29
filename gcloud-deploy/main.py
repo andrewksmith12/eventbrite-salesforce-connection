@@ -1,3 +1,4 @@
+# imports all needed modues to the python script
 import simple_salesforce
 from google.cloud import error_reporting
 import creds
@@ -16,12 +17,7 @@ AUTH_HEADER_EB = {
     'Authorization': 'Bearer {token}'.format(token=EB_API_KEY)
 }
 
-# Create Flask App Instance. REMOVED- Used for testing and in deployment via Flask. Not applicable for Cloud Function Deployment.
-# app = Flask(__name__)
-
 # Returns the authenticated salesforce object we'll use to query, create, and update salesforce objects.
-
-
 def getSalesforce():
     if creds.SF_OPERATING_MODE == "test":
         sf = Salesforce(instance=creds.SF_SANDBOX_URL, username=creds.SF_SANDBOX_USERNAME, password=creds.SF_SANDBOX_PASSWORD, security_token=creds.SF_SANDBOX_SECURITY_TOKEN, domain="test")
@@ -31,9 +27,8 @@ def getSalesforce():
         print("Invalid Login Domain. Check/Update creds.py!")
     return sf
 
-# Creates a salesforce account given the attendee data.
 
-
+# Creates a salesforce account(primary affiliation or a company) given the data from eventbrite.
 def createNewAccount(sf, attendee):
     result = ""
     try:
@@ -46,6 +41,7 @@ def createNewAccount(sf, attendee):
     return newAccountID
 
 
+# Creates a salesforce contact (person who booked) given the data from eventbrite.
 def createNewContact(sf, attendee, accountID):
     result = sf.Contact.create(
         {'Email': attendee['profile']['email'],
@@ -58,13 +54,16 @@ def createNewContact(sf, attendee, accountID):
     return newContactID
 
 
+# Creates a salesforce campaign member (attendee) given the data from eventbrite.
 def createCampaignMember(sf, attendee, campaignID, contactID):
+    # sets the question answers to blank
     pocAnswer = ""
     raceAnswer = ""
     raceFreeResponse = ""
     otherQuestions = ""
     howDidYouHearAboutUs = ""
 
+    # if there is any questions that are answered, the blank is replaced with the response from eventbrite
     try:
         for question in attendee['answers']:
             if "black, indigenous, and/or a person of color" in question['question'].lower():
@@ -105,16 +104,19 @@ def createCampaignMember(sf, attendee, campaignID, contactID):
         pass
 
 
+# Creates a salesforce opportunity (financial data) given the data from eventbrite.
 def createOpportunity(sf, attendee, contactID, accountID, campaignID, api_url):
     r = requests.get(api_url, headers=AUTH_HEADER_EB, params={"expand": ["category", "promotional_code"]})
     order = r.json()
     buyerQuery = sf.query(format_soql("SELECT Id, Email, npsp__Primary_Affiliation__c, Primary_Affiliation_text__c FROM Contact WHERE Email = '{buyerEmail}'".format(buyerEmail=order['email'].strip().replace('"', '\\"').replace("'", "\\'"))))
+    # if salesforce returns one primary affiliation for the attendee, it will select the first primary affiliation returned
     if buyerQuery['totalSize'] == 1:
         buyerID = buyerQuery['records'][0]['Id']
         sf.Contact.update(buyerID, {
             'FirstName': order['first_name'],
             'LastName': order['last_name'],
         })
+    # if not, it will create a new contact
     else:
         createResponse = sf.Contact.create({
             'FirstName': order['first_name'],
@@ -129,6 +131,7 @@ def createOpportunity(sf, attendee, contactID, accountID, campaignID, api_url):
     print("Opportunity created for "+attendee['profile']['first_name'])
 
 
+# Updates a salesforce contact (person who booked) given the data from eventbrite.
 def updateContactNormal(sf, attendee, contactID, accountID):
     sf.Contact.update(contactID,
                       {'FirstName': attendee['profile']['first_name'],
@@ -139,6 +142,7 @@ def updateContactNormal(sf, attendee, contactID, accountID):
     print("Contact updated for "+attendee['profile']['first_name'])
 
 
+# Creates a salesforce event given the data from eventbrite.
 def createEvent(api_url):
     sf = getSalesforce()
     event = requests.get(api_url, headers=AUTH_HEADER_EB, params={"expand": "category", "expand": "promotional_code", "expand": "promo_code"})
@@ -158,7 +162,7 @@ def createEvent(api_url):
     print(sf_respond)
     return sf_respond['id']
 
-
+# Runs through a decision tree based on if the information is available on salesforce and either creates or updates information given the data from eventbrite.
 def processOrder(api_url):
     sf = getSalesforce()
     r = requests.get(api_url+"/attendees", headers=AUTH_HEADER_EB, params={"expand": ["category", "promotional_code"]})
@@ -266,6 +270,7 @@ def processOrder(api_url):
                     print("Done!")
 
 
+# When an attendee is checked in on eventbrite, the attendee is checked in on salesforce
 def processCheckin(api_url):
     sf = getSalesforce()
     # Find CM record in SF, mark as checked in.
@@ -282,10 +287,8 @@ def processCheckin(api_url):
     else:
         print("Campaign member not found, skipping...")
 
-# Main function invoked by Google Cloud Functions when responding to requests.
-# @app.route('/')
 
-
+# Responds to eventbrite's request so eventbrite will not resend information
 def respond(request):
     print("request recieved")
     requestJSON = request.get_json()  # Convert request object to dictionary
@@ -311,13 +314,3 @@ def respond(request):
             else:
                 return Response("Check credentials file. Invalid credentials detected.")
     return Response("Ready to process data.")
-
-
-# @app.route('/', methods=['GET'])
-# def respondGet():
-#     return "App is running! Ready to recieve POST requests from Eventbrite."
-
-# if __name__ == '__main__':
-#    app.run()
-
-# processOrder(BASE_URL+"orders/1656541919")

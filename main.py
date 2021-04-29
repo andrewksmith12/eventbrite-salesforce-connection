@@ -1,4 +1,4 @@
-#imports all needed modues to the python script
+# imports all needed modues to the python script
 import simple_salesforce
 from google.cloud import error_reporting
 import creds
@@ -17,12 +17,7 @@ AUTH_HEADER_EB = {
     'Authorization': 'Bearer {token}'.format(token=EB_API_KEY)
 }
 
-# Create Flask App Instance. REMOVED- Used for testing and in deployment via Flask. Not applicable for Cloud Function Deployment.
-# app = Flask(__name__)
-
 # Returns the authenticated salesforce object we'll use to query, create, and update salesforce objects.
-
-#ANDREW not too sure what this line does i think you told me that it tests to see if the salesforce link works
 def getSalesforce():
     if creds.SF_OPERATING_MODE == "test":
         sf = Salesforce(instance=creds.SF_SANDBOX_URL, username=creds.SF_SANDBOX_USERNAME, password=creds.SF_SANDBOX_PASSWORD, security_token=creds.SF_SANDBOX_SECURITY_TOKEN, domain="test")
@@ -61,14 +56,14 @@ def createNewContact(sf, attendee, accountID):
 
 # Creates a salesforce campaign member (attendee) given the data from eventbrite.
 def createCampaignMember(sf, attendee, campaignID, contactID):
-    #sets the question answers to blank
+    # sets the question answers to blank
     pocAnswer = ""
     raceAnswer = ""
     raceFreeResponse = ""
     otherQuestions = ""
     howDidYouHearAboutUs = ""
 
-    #if there is any questions that are answered, the blank is replaced with the response from eventbrite
+    # if there is any questions that are answered, the blank is replaced with the response from eventbrite
     try:
         for question in attendee['answers']:
             if "black, indigenous, and/or a person of color" in question['question'].lower():
@@ -114,14 +109,14 @@ def createOpportunity(sf, attendee, contactID, accountID, campaignID, api_url):
     r = requests.get(api_url, headers=AUTH_HEADER_EB, params={"expand": ["category", "promotional_code"]})
     order = r.json()
     buyerQuery = sf.query(format_soql("SELECT Id, Email, npsp__Primary_Affiliation__c, Primary_Affiliation_text__c FROM Contact WHERE Email = '{buyerEmail}'".format(buyerEmail=order['email'].strip().replace('"', '\\"').replace("'", "\\'"))))
-    #if salesforce returns one primary affiliation for the attendee, it will select the first primary affiliation returned
+    # if salesforce returns one primary affiliation for the attendee, it will select the first primary affiliation returned
     if buyerQuery['totalSize'] == 1:
         buyerID = buyerQuery['records'][0]['Id']
         sf.Contact.update(buyerID, {
             'FirstName': order['first_name'],
             'LastName': order['last_name'],
         })
-    #if not, it will create a new contact
+    # if not, it will create a new contact
     else:
         createResponse = sf.Contact.create({
             'FirstName': order['first_name'],
@@ -275,7 +270,7 @@ def processOrder(api_url):
                     print("Done!")
 
 
-#When an attendee is checked in on eventbrite, the attendee is checked in on salesforce
+# When an attendee is checked in on eventbrite, the attendee is checked in on salesforce
 def processCheckin(api_url):
     sf = getSalesforce()
     # Find CM record in SF, mark as checked in.
@@ -292,10 +287,8 @@ def processCheckin(api_url):
     else:
         print("Campaign member not found, skipping...")
 
-# Main function invoked by Google Cloud Functions when responding to requests.
-# @app.route('/')
 
-#Responds to eventbrite's request so eventbrite will not resend information
+# Responds to eventbrite's request so eventbrite will not resend information
 def respond(request):
     print("request recieved")
     requestJSON = request.get_json()  # Convert request object to dictionary
@@ -321,13 +314,3 @@ def respond(request):
             else:
                 return Response("Check credentials file. Invalid credentials detected.")
     return Response("Ready to process data.")
-
-
-# @app.route('/', methods=['GET'])
-# def respondGet():
-#     return "App is running! Ready to recieve POST requests from Eventbrite."
-
-# if __name__ == '__main__':
-#    app.run()
-
-# processOrder(BASE_URL+"orders/1656541919")

@@ -1,0 +1,54 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<html><head><title>Python: module main</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+</head><body bgcolor="#f0f0f8">
+
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="heading">
+<tr bgcolor="#7799ee">
+<td valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial">&nbsp;<br><big><big><strong>main</strong></big></big></font></td
+><td align=right valign=bottom
+><font color="#ffffff" face="helvetica, arial"><a href=".">index</a><br><a href="file:/Users/aksmith/code/technofly/main.py">/Users/aksmith/code/technofly/main.py</a></font></td></tr></table>
+    <p><tt>#&nbsp;imports&nbsp;all&nbsp;needed&nbsp;modues&nbsp;to&nbsp;the&nbsp;python&nbsp;script</tt></p>
+<p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#aa55cc">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial"><big><strong>Modules</strong></big></font></td></tr>
+    
+<tr><td bgcolor="#aa55cc"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
+<td width="100%"><table width="100%" summary="list"><tr><td width="25%" valign=top><a href="creds.html">creds</a><br>
+<a href="google.cloud.error_reporting.html">google.cloud.error_reporting</a><br>
+</td><td width="25%" valign=top><a href="json.html">json</a><br>
+<a href="requests.html">requests</a><br>
+</td><td width="25%" valign=top><a href="simple_salesforce.html">simple_salesforce</a><br>
+</td><td width="25%" valign=top></td></tr></table></td></tr></table><p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#eeaa77">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial"><big><strong>Functions</strong></big></font></td></tr>
+    
+<tr><td bgcolor="#eeaa77"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
+<td width="100%"><dl><dt><a name="-createCampaignMember"><strong>createCampaignMember</strong></a>(sf, attendee, campaignID, contactID)</dt><dd><tt>#&nbsp;Creates&nbsp;a&nbsp;salesforce&nbsp;campaign&nbsp;member&nbsp;(attendee)&nbsp;given&nbsp;the&nbsp;data&nbsp;from&nbsp;eventbrite.</tt></dd></dl>
+ <dl><dt><a name="-createEvent"><strong>createEvent</strong></a>(api_url)</dt><dd><tt>#&nbsp;Creates&nbsp;a&nbsp;salesforce&nbsp;event&nbsp;given&nbsp;the&nbsp;data&nbsp;from&nbsp;eventbrite.</tt></dd></dl>
+ <dl><dt><a name="-createNewAccount"><strong>createNewAccount</strong></a>(sf, attendee)</dt><dd><tt>#&nbsp;Creates&nbsp;a&nbsp;salesforce&nbsp;account(primary&nbsp;affiliation&nbsp;or&nbsp;a&nbsp;company)&nbsp;given&nbsp;the&nbsp;data&nbsp;from&nbsp;eventbrite.</tt></dd></dl>
+ <dl><dt><a name="-createNewContact"><strong>createNewContact</strong></a>(sf, attendee, accountID)</dt><dd><tt>#&nbsp;Creates&nbsp;a&nbsp;salesforce&nbsp;contact&nbsp;(person&nbsp;who&nbsp;booked)&nbsp;given&nbsp;the&nbsp;data&nbsp;from&nbsp;eventbrite.</tt></dd></dl>
+ <dl><dt><a name="-createOpportunity"><strong>createOpportunity</strong></a>(sf, attendee, contactID, accountID, campaignID, api_url)</dt><dd><tt>#&nbsp;Creates&nbsp;a&nbsp;salesforce&nbsp;opportunity&nbsp;(financial&nbsp;data)&nbsp;given&nbsp;the&nbsp;data&nbsp;from&nbsp;eventbrite.</tt></dd></dl>
+ <dl><dt><a name="-getSalesforce"><strong>getSalesforce</strong></a>()</dt><dd><tt>#&nbsp;Returns&nbsp;the&nbsp;authenticated&nbsp;salesforce&nbsp;object&nbsp;we'll&nbsp;use&nbsp;to&nbsp;query,&nbsp;create,&nbsp;and&nbsp;update&nbsp;salesforce&nbsp;objects.</tt></dd></dl>
+ <dl><dt><a name="-processCheckin"><strong>processCheckin</strong></a>(api_url)</dt><dd><tt>#&nbsp;When&nbsp;an&nbsp;attendee&nbsp;is&nbsp;checked&nbsp;in&nbsp;on&nbsp;eventbrite,&nbsp;the&nbsp;attendee&nbsp;is&nbsp;checked&nbsp;in&nbsp;on&nbsp;salesforce</tt></dd></dl>
+ <dl><dt><a name="-processOrder"><strong>processOrder</strong></a>(api_url)</dt><dd><tt>#&nbsp;Runs&nbsp;through&nbsp;a&nbsp;decision&nbsp;tree&nbsp;based&nbsp;on&nbsp;if&nbsp;the&nbsp;information&nbsp;is&nbsp;available&nbsp;on&nbsp;salesforce&nbsp;and&nbsp;either&nbsp;creates&nbsp;or&nbsp;updates&nbsp;information&nbsp;given&nbsp;the&nbsp;data&nbsp;from&nbsp;eventbrite.</tt></dd></dl>
+ <dl><dt><a name="-respond"><strong>respond</strong></a>(request)</dt><dd><tt>#&nbsp;Responds&nbsp;to&nbsp;eventbrite's&nbsp;request&nbsp;so&nbsp;eventbrite&nbsp;will&nbsp;not&nbsp;resend&nbsp;information</tt></dd></dl>
+ <dl><dt><a name="-updateContactNormal"><strong>updateContactNormal</strong></a>(sf, attendee, contactID, accountID)</dt><dd><tt>#&nbsp;Updates&nbsp;a&nbsp;salesforce&nbsp;contact&nbsp;(person&nbsp;who&nbsp;booked)&nbsp;given&nbsp;the&nbsp;data&nbsp;from&nbsp;eventbrite.</tt></dd></dl>
+</td></tr></table><p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#55aa55">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial"><big><strong>Data</strong></big></font></td></tr>
+    
+<tr><td bgcolor="#55aa55"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
+<td width="100%"><strong>AUTH_HEADER_EB</strong> = {'Authorization': 'Bearer '}<br>
+<strong>BASE_URL</strong> = 'https://www.eventbriteapi.com/v3/'<br>
+<strong>EB_API_KEY</strong> = ''<br>
+<strong>TEST_EVENT_URL</strong> = 'https://www.eventbriteapi.com/v3/events/151257855317/'<br>
+<strong>request</strong> = &lt;LocalProxy unbound&gt;</td></tr></table>
+</body></html>
