@@ -2,11 +2,14 @@ import requests
 import threading
 import time
 from flask import Flask, request, Response
+
+
 def makeRequest(data):
     try:
         requests.post("https://us-central1-technofly.cloudfunctions.net/test-env-technofly", json=data)
     finally:
         print("done")
+
 
 def handler(request):
     print("Recieved request, printing json")

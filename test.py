@@ -38,7 +38,6 @@ import requests
 # sf = main.getSalesforce()
 
 
-
 # for attendee in attendees['attendees']:
 #     #print("SELECT Id, Name from Account WHERE Name LIKE '{ebOrg}'".format(ebOrg=attendee['profile']['company']).strip().replace('"', '\"').replace("'", "\'").replace("'", "\'"))
 
@@ -49,7 +48,6 @@ import requests
 # print(r.status_code == 200)
 
 
-
 # result = sf.CampaignMember.update('00v7h000004zMVVAA2', {'status':'Attending'}) #sf.CampaignMemberStatus.create('7017h000000xP3rAAE', {'Label':'Checked In', 'HasResponded':True})
 
 
@@ -57,7 +55,7 @@ import requests
 
 # sf.Campaign.delete('7017h000000xP5JAAU')
 
-r = requests({'config':{'action':'gcloud-test'}})
+r = requests({'config': {'action': 'gcloud-test'}})
 print(r.get_json)
 response = main.respond(r)
 print(response)
